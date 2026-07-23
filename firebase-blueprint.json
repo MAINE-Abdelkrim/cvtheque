@@ -1,0 +1,164 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and roles",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "ADMIN",
+            "RECRUITER",
+            "CANDIDATE"
+          ]
+        },
+        "subscription": {
+          "type": "string",
+          "enum": [
+            "FREE",
+            "PREMIUM"
+          ]
+        },
+        "photoURL": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "firstName",
+        "lastName",
+        "email",
+        "role",
+        "subscription",
+        "isActive"
+      ]
+    },
+    "CV": {
+      "title": "Candidate CV",
+      "description": "CV uploaded by a candidate and processed by AI",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "fileURL": {
+          "type": "string"
+        },
+        "aiScore": {
+          "type": "number"
+        },
+        "feedback": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "PROCESSED",
+            "FAILED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "uid",
+        "fileName",
+        "status",
+        "createdAt"
+      ]
+    },
+    "Job": {
+      "title": "Job Posting",
+      "description": "Job descriptions posted by recruiters",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "recruiterId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "CLOSED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "recruiterId",
+        "title",
+        "description",
+        "company",
+        "status",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles by UID"
+    },
+    "cvs/{cvId}": {
+      "schema": "CV",
+      "description": "Candidate CV documents"
+    },
+    "jobs/{jobId}": {
+      "schema": "Job",
+      "description": "Job positions created by Recruiters"
+    }
+  }
+}
