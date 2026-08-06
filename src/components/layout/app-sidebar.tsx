@@ -45,6 +45,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       roles: ['ADMIN', 'RECRUITER', 'CANDIDATE']
     },
     {
+      label: 'Créer une Offre (IA)',
+      path: '/dashboard/recruiter/create-job',
+      icon: Briefcase,
+      roles: ['ADMIN', 'RECRUITER']
+    },
+    {
       label: 'Gestion Utilisateurs',
       path: '/dashboard/admin', // aligned with routing in App.tsx
       icon: Users,

@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
+import { GoogleGenAI } from '@google/genai';
 import { getFirebaseAdmin, isFirebaseAdminConfigured } from './src/lib/firebase/admin';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -221,6 +222,120 @@ async function startServer() {
       success: true,
       message: 'Logout complété avec succès'
     });
+  });
+
+  // API: Gemini LLM Job Creation Assistant
+  app.post('/api/jobs/ai-generate', async (req, res) => {
+    const { prompt, conversationHistory } = req.body;
+
+    if (!prompt && (!conversationHistory || conversationHistory.length === 0)) {
+      return res.status(400).json({ error: 'Un message ou un historique de conversation est requis.' });
+    }
+
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'La clé API GEMINI_API_KEY n\'est pas configurée.' });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      const systemInstruction = `Tu es un assistant expert en recrutement et IA RH pour la plateforme CVthèque IA.
+Ton rôle est d'échanger avec le recruteur pour définir sa fiche de poste idéale, puis d'extraire systématiquement les paramètres structurés dans un format JSON valide.
+
+Chaque réponse doit contenir des conseils clairs en français pour le recruteur, ET lorsqu'une description de poste se dessine (même partielle), tu DOIS ajouter le bloc JSON structuré exact sous le format suivant à la toute fin de ton message :
+
+\`\`\`json
+{
+  "job_id": "job-456",
+  "job_title": "Backend Developer",
+  "company": "Nom de l'entreprise",
+  "description": "Nous recherchons un développeur backend chevronné...",
+  "required_skills": ["Python", "FastAPI", "PostgreSQL"],
+  "preferred_skills": ["Docker", "AWS"],
+  "minimum_experience_years": 3,
+  "maximum_experience_years": null,
+  "required_education": {
+    "minimum_level": "Master",
+    "preferred_fields": ["Computer Science", "Software Engineering"],
+    "mandatory": false
+  },
+  "required_languages": [
+    {
+      "name": "French",
+      "minimum_level": "fluent",
+      "mandatory": true
+    },
+    {
+      "name": "English",
+      "minimum_level": "intermediate",
+      "mandatory": false
+    }
+  ],
+  "location": "Casablanca",
+  "remote_allowed": true,
+  "work_mode": "hybrid",
+  "contract_type": "CDI",
+  "mandatory_requirements": ["Disponibilité immédiate"],
+  "scoring_weights": null
+}
+\`\`\`
+
+Reste courtois, précis, et aide le recruteur à affiner sa recherche. Réponds toujours en français.`;
+
+      const contents: any[] = [];
+      if (conversationHistory && Array.isArray(conversationHistory)) {
+        for (const msg of conversationHistory) {
+          contents.push({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+          });
+        }
+      }
+      if (prompt) {
+        contents.push({
+          role: 'user',
+          parts: [{ text: prompt }]
+        });
+      }
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: contents,
+        config: {
+          systemInstruction,
+          temperature: 0.7
+        }
+      });
+
+      const responseText = response.text || '';
+
+      // Extract JSON block
+      let extractedJson = null;
+      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        try {
+          extractedJson = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          console.warn('[Gemini Job AI] Failed to parse extracted JSON:', e);
+        }
+      }
+
+      return res.json({
+        reply: responseText,
+        extractedJson
+      });
+    } catch (error: any) {
+      console.error('[Gemini Job AI] Error generating job content:', error);
+      return res.status(500).json({ error: error.message || 'Erreur lors de la communication avec Gemini LLM' });
+    }
   });
 
   // API: Get active session profile (User details)

@@ -6,6 +6,7 @@ import { GoogleLoginButton } from './components/auth/google-login-button';
 import { DashboardLayout } from './components/layout/dashboard-layout';
 import { AdminView } from './components/dashboard/admin-view';
 import { RecruiterView } from './components/dashboard/recruiter-view';
+import { CreateJobPage } from './components/dashboard/create-job-page';
 import { CandidateView } from './components/dashboard/candidate-view';
 import { ProfileView } from './components/dashboard/profile-view';
 import { SettingsView } from './components/dashboard/settings-view';
@@ -57,8 +58,11 @@ function AppContent() {
         // Redirection middleware: unauthorized roles trying admin
         toast.error('Accès refusé. Rôle Administrateur requis.');
         navigate('/unauthorized');
-      } else if (currentPath.startsWith('/dashboard/recruiter') && role !== 'RECRUITER') {
+      } else if (currentPath.startsWith('/dashboard/recruiter') && role !== 'RECRUITER' && role !== 'ADMIN') {
         // Redirection middleware: unauthorized roles trying recruiter
+        toast.error('Accès refusé. Rôle Recruteur requis.');
+        navigate('/unauthorized');
+      } else if (currentPath === '/create-job' && role !== 'RECRUITER' && role !== 'ADMIN') {
         toast.error('Accès refusé. Rôle Recruteur requis.');
         navigate('/unauthorized');
       } else if (currentPath.startsWith('/dashboard/candidate') && role !== 'CANDIDATE') {
@@ -77,7 +81,10 @@ function AppContent() {
       case '/dashboard/admin':
         return <AdminView />;
       case '/dashboard/recruiter':
-        return <RecruiterView />;
+        return <RecruiterView onNavigate={navigate} />;
+      case '/dashboard/recruiter/create-job':
+      case '/create-job':
+        return <CreateJobPage onNavigate={navigate} />;
       case '/dashboard/candidate':
         return <CandidateView />;
       case '/profile':
@@ -89,8 +96,11 @@ function AppContent() {
         if (currentPath.startsWith('/dashboard/admin/')) {
           return <AdminView />;
         }
+        if (currentPath === '/dashboard/recruiter/create-job') {
+          return <CreateJobPage onNavigate={navigate} />;
+        }
         if (currentPath.startsWith('/dashboard/recruiter/')) {
-          return <RecruiterView />;
+          return <RecruiterView onNavigate={navigate} />;
         }
         return <CandidateView />;
     }
@@ -100,6 +110,7 @@ function AppContent() {
   const getPageTitle = () => {
     if (currentPath === '/unauthorized') return 'Accès non autorisé';
     if (currentPath.startsWith('/dashboard/admin')) return 'Panneau Administrateur';
+    if (currentPath === '/dashboard/recruiter/create-job' || currentPath === '/create-job') return 'Créer une Fiche de Poste';
     if (currentPath.startsWith('/dashboard/recruiter')) return 'Portail Recruteur';
     if (currentPath.startsWith('/dashboard/candidate')) return 'Espace Candidat';
     if (currentPath === '/profile') return 'Profil Utilisateur';

@@ -26,13 +26,42 @@ export interface CandidateCV {
   createdAt: string;
 }
 
+export interface EducationRequirement {
+  minimum_level: string; // e.g. "Master", "Licence / Bac+3", "Doctorat"
+  preferred_fields: string[];
+  mandatory: boolean;
+}
+
+export interface LanguageRequirement {
+  name: string; // e.g. "French", "English"
+  minimum_level: string; // e.g. "beginner", "intermediate", "fluent", "native"
+  mandatory: boolean;
+}
+
 export interface JobPosting {
   id: string;
+  job_id?: string;
   recruiterId: string;
   title: string;
   description: string;
   company: string;
   location: string;
+  required_skills?: string[];
+  preferred_skills?: string[];
+  minimum_experience_years?: number;
+  maximum_experience_years?: number | null;
+  required_education?: EducationRequirement;
+  required_languages?: LanguageRequirement[];
+  remote_allowed?: boolean;
+  work_mode?: 'onsite' | 'hybrid' | 'remote';
+  contract_type?: 'CDI' | 'CDD' | 'Freelance' | 'Stage' | 'Alternance';
+  mandatory_requirements?: string[];
+  scoring_weights?: {
+    skills_weight?: number;
+    experience_weight?: number;
+    education_weight?: number;
+    language_weight?: number;
+  } | null;
   status: 'OPEN' | 'CLOSED';
   createdAt: string;
 }

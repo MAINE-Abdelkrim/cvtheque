@@ -26,7 +26,11 @@ Building,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const RecruiterView: React.FC = () => {
+interface RecruiterViewProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const RecruiterView: React.FC<RecruiterViewProps> = ({ onNavigate }) => {
   const bentoGridRef = useRef<HTMLDivElement>(null);
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [cvs, setCvs] = useState<CandidateCV[]>([]);
@@ -260,10 +264,13 @@ export const RecruiterView: React.FC = () => {
 
             <div className="space-y-3">
               <button
-                onClick={() => setShowAddJobModal(true)}
+                onClick={() => onNavigate ? onNavigate('/dashboard/recruiter/create-job') : setShowAddJobModal(true)}
                 className="w-full flex items-center justify-between p-3 rounded-xl border border-blue-500/20 bg-blue-600/5 hover:bg-blue-600/10 hover:border-blue-500/30 text-left cursor-pointer transition-all text-xs text-blue-400 font-semibold"
               >
-                <span className="font-bold">Créer une fiche de poste</span>
+                <span className="font-bold flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Créer une fiche de poste (IA)</span>
+                </span>
                 <Plus className="w-4 h-4 text-blue-400" />
               </button>
 
@@ -327,7 +334,7 @@ export const RecruiterView: React.FC = () => {
                 <p className="text-[11px] text-slate-500">Postez et éditez vos positions</p>
               </div>
               <button
-                onClick={() => setShowAddJobModal(true)}
+                onClick={() => onNavigate ? onNavigate('/dashboard/recruiter/create-job') : setShowAddJobModal(true)}
                 className="p-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white cursor-pointer transition-all shadow-md shadow-blue-500/10"
                 title="Ajouter une offre"
               >
@@ -372,7 +379,28 @@ export const RecruiterView: React.FC = () => {
                         <div className="flex items-center space-x-1.5 text-[10px] text-slate-500 mt-0.5">
                           <MapPin className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">{job.location}</span>
+                          {job.contract_type && (
+                            <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono text-[9px] ml-1">
+                              {job.contract_type}
+                            </span>
+                          )}
                         </div>
+
+                        {/* Rich skills chips */}
+                        {job.required_skills && job.required_skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {job.required_skills.slice(0, 3).map((skill, sIdx) => (
+                              <span key={sIdx} className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                                {skill}
+                              </span>
+                            ))}
+                            {job.required_skills.length > 3 && (
+                              <span className="text-[9px] font-mono text-slate-500 self-center">
+                                +{job.required_skills.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={(e) => {
@@ -394,7 +422,7 @@ export const RecruiterView: React.FC = () => {
                 description="Publiez votre premier descriptif de poste pour débuter l'appariement IA."
                 icon={Briefcase}
                 actionText="Créer une offre"
-                onAction={() => setShowAddJobModal(true)}
+                onAction={() => onNavigate ? onNavigate('/dashboard/recruiter/create-job') : setShowAddJobModal(true)}
               />
             )}
           </div>
