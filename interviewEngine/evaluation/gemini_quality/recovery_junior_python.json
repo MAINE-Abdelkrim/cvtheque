@@ -1,0 +1,382 @@
+{
+  "artifact_version": 1,
+  "run_id": "9ddfefb5-c3d3-4de2-921c-d98b6abd1cb6",
+  "status": "stopped",
+  "mode": "benchmark",
+  "model": "gemini-3.6-flash",
+  "synthetic_data_only": true,
+  "attempt_ceiling": 12,
+  "selected_scenarios": [
+    "junior_python_mixed_answers"
+  ],
+  "completed_scenarios": [],
+  "current_scenario": "junior_python_mixed_answers",
+  "operations": {
+    "attempts_sent": 12,
+    "attempts_blocked": 1,
+    "successes": 1,
+    "timeouts": 0,
+    "provider_unavailable": 11,
+    "invalid_responses": 0,
+    "validation_failures": 1,
+    "retries": 5,
+    "fallback_activations": 6,
+    "fallback_successes": 6,
+    "fallback_failures": 0,
+    "accepted_operations": 6
+  },
+  "operation_events": [
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_succeeded",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "application_validation_failure",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_activated",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_succeeded",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "retry_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_activated",
+      "operation": "evaluate_answer",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_succeeded",
+      "operation": "evaluate_answer",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "retry_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_activated",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_succeeded",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "retry_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_activated",
+      "operation": "evaluate_answer",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_succeeded",
+      "operation": "evaluate_answer",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "retry_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_activated",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_succeeded",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "retry_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "evaluate_answer",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_activated",
+      "operation": "evaluate_answer",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "fallback_succeeded",
+      "operation": "evaluate_answer",
+      "provider": "mock",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_final_report",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "generate_final_report",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    },
+    {
+      "event": "gemini_attempt_blocked_by_ceiling",
+      "operation": "generate_final_report",
+      "provider": "gemini",
+      "scenario": "junior_python_mixed_answers"
+    }
+  ],
+  "accepted_outputs": [
+    {
+      "operation": "generate_question",
+      "scenario": "junior_python_mixed_answers",
+      "result": {
+        "question_id": "030fc3f0-7795-5897-9c3c-f78ae2382173",
+        "category": "technical",
+        "question": "Your CV lists Python. What factors would you consider when applying it in a professional context?",
+        "based_on": [
+          "cv:skill:Python"
+        ],
+        "difficulty": "easy"
+      }
+    },
+    {
+      "operation": "evaluate_answer",
+      "scenario": "junior_python_mixed_answers",
+      "result": {
+        "score": 74,
+        "classification": "good",
+        "strengths": [
+          "Provided a sufficiently developed response",
+          "Connected the answer to the question context",
+          "Included concrete reasoning or an example"
+        ],
+        "weaknesses": [],
+        "feedback": "The response is relevant and sufficiently supported."
+      }
+    },
+    {
+      "operation": "generate_question",
+      "scenario": "junior_python_mixed_answers",
+      "result": {
+        "question_id": "22969992-cfea-5e88-afad-ef566f8716da",
+        "category": "skills",
+        "question": "Your CV lists SQL. What factors would you consider when applying it in a professional context?",
+        "based_on": [
+          "cv:skill:SQL"
+        ],
+        "difficulty": "medium"
+      }
+    },
+    {
+      "operation": "evaluate_answer",
+      "scenario": "junior_python_mixed_answers",
+      "result": {
+        "score": 49,
+        "classification": "needs_improvement",
+        "strengths": [
+          "Connected the answer to the question context",
+          "Included concrete reasoning or an example"
+        ],
+        "weaknesses": [
+          "The response could include more detail"
+        ],
+        "feedback": "The response is understandable but would benefit from more specific evidence and depth."
+      }
+    },
+    {
+      "operation": "generate_question",
+      "scenario": "junior_python_mixed_answers",
+      "result": {
+        "question_id": "40dd43a9-aaf1-53ae-a0da-206eca6e63bd",
+        "category": "skills",
+        "question": "Can you give a concrete example related to SQL, explain your specific responsibility, and describe the outcome?",
+        "based_on": [
+          "cv:skill:SQL"
+        ],
+        "difficulty": "medium"
+      }
+    },
+    {
+      "operation": "evaluate_answer",
+      "scenario": "junior_python_mixed_answers",
+      "result": {
+        "score": 25,
+        "classification": "needs_improvement",
+        "strengths": [
+          "Connected the answer to the question context"
+        ],
+        "weaknesses": [
+          "The response could include more detail",
+          "Could include a concrete example or outcome"
+        ],
+        "feedback": "The response is understandable but would benefit from more specific evidence and depth."
+      }
+    }
+  ],
+  "scenarios": {},
+  "preflight": null,
+  "failure": {
+    "type": "AttemptCeilingReached",
+    "message": "Benchmark operation did not complete"
+  }
+}

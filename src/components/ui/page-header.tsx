@@ -1,0 +1,5 @@
+import React from 'react';
+
+export const PageHeader: React.FC<{ title: string; description?: string; actions?: React.ReactNode; className?: string }> = ({ title, description, actions, className = '' }) => <header className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${className}`}><div><h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em] text-[var(--foreground)]">{title}</h1>{description && <p className="mt-1.5 max-w-2xl text-sm text-[var(--muted-foreground)]">{description}</p>}</div>{actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}</header>;
+
+export const SectionHeader: React.FC<{ title: string; description?: string; actions?: React.ReactNode; className?: string }> = ({ title, description, actions, className = '' }) => <div className={`flex items-start justify-between gap-4 ${className}`}><div><h2 className="text-lg font-semibold text-[var(--foreground)]">{title}</h2>{description && <p className="mt-1 text-[13px] text-[var(--muted-foreground)]">{description}</p>}</div>{actions}</div>;

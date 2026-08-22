@@ -5,10 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "dev:parser": "cd \"CVparser/ai-cv-parser-api-&-test-studio (1)\" && .venv-llm\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001",
+    "dev:matching": "cd matching-engine && python -m uvicorn app.api.fastapi_app:app --host 127.0.0.1 --port 8002 --workers 1 --no-access-log",
+    "dev:interview": "cd interviewEngine && python -m uvicorn app.main:app --host 127.0.0.1 --port 8003 --workers 1",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:cv": "tsx --test tests/cv-integration.test.ts",
+    "test:jobs": "tsx --test tests/job-integration.test.ts",
+    "test:matching": "tsx --test tests/matching-adapter.test.ts tests/matching-integration.test.ts tests/matching-client.test.ts",
+    "test:contracts": "tsx --test tests/contracts/contract-fixtures.test.ts",
+    "test:interviews": "tsx --test tests/interview-client.test.ts tests/interview-integration.test.ts",
+    "test:interview-frontend": "tsx --test tests/interview-frontend-client.test.ts tests/interview-frontend-state.test.ts",
+    "test:candidate-jobs": "tsx --test tests/candidate-open-jobs.test.ts",
+    "test:interview-history": "tsx --test tests/interview-history.test.ts tests/interview-history-frontend.test.ts",
+    "test:admin": "tsx --test tests/admin-security.test.ts"
+    ,"test:auth": "tsx --test tests/auth-ux.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

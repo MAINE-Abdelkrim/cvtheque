@@ -1,0 +1,10 @@
+{
+  "candidate_id": "candidate-123", "full_name": "Example Candidate",
+  "summary": "Backend developer with three years of experience.",
+  "skills": ["Python", "FastAPI", "PostgreSQL", "Docker"],
+  "experiences": [{"job_title": "Backend Developer", "company": "ABC Tech", "start_date": "2022-01", "end_date": "2025-01", "duration_months": 36, "description": "Developed REST APIs.", "skills": ["Python", "FastAPI", "PostgreSQL"]}],
+  "total_experience_years": 3,
+  "education": [{"degree": "Master", "field": "Computer Science", "institution": "Example University", "graduation_year": 2022}],
+  "languages": [{"name": "French", "level": "fluent"}, {"name": "English", "level": "intermediate"}],
+  "location": "Casablanca", "preferred_work_mode": "hybrid", "preferred_contract_types": ["CDI"]
+}

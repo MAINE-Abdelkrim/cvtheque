@@ -1,0 +1,56 @@
+{
+  "identity": {
+    "full_name": null,
+    "email": null,
+    "phone": null,
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": null,
+    "job_title": "Finance Assistant",
+    "other_links": []
+  },
+  "summary": "Reliable finance professional supporting reconciliations, reporting and month-end controls.",
+  "skills": [
+    {
+      "name": "Excel"
+    },
+    {
+      "name": "Accounting"
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": null,
+      "original_level": null
+    },
+    {
+      "language": "Spanish",
+      "level": null,
+      "original_level": null
+    }
+  ],
+  "certifications": [],
+  "education": [
+    {
+      "degree": "Bachelor",
+      "field_of_study": "Accounting",
+      "institution": "Central Business College",
+      "location": null,
+      "start_date": "2019",
+      "end_date": "2021",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Finance Assistant",
+      "company": "Fictional Ledger Group",
+      "location": null,
+      "start_date": "2022",
+      "end_date": "2024",
+      "description": "Prepared reconciliations and supported monthly reporting."
+    }
+  ]
+}

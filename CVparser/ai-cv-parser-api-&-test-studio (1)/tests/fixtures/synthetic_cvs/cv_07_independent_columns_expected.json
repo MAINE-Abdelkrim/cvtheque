@@ -1,0 +1,110 @@
+{
+  "identity": {
+    "full_name": "Nadia El Mansouri",
+    "email": "nadia.elmansouri@example.com",
+    "phone": "+212 600 000 707",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": null,
+    "job_title": "Operations Specialist",
+    "other_links": []
+  },
+  "summary": "Spécialiste des opérations organisée, attentive à la qualité de service et à l'amélioration continue.",
+  "skills": [
+    {
+      "name": "Gestion de projet"
+    },
+    {
+      "name": "Analyse des processus"
+    },
+    {
+      "name": "Gestion des priorités"
+    },
+    {
+      "name": "Travail en équipe"
+    },
+    {
+      "name": "Adaptabilité"
+    }
+  ],
+  "languages": [
+    {
+      "language": "Arabic",
+      "level": "Native",
+      "original_level": "Maternelle"
+    },
+    {
+      "language": "French",
+      "level": "Fluent",
+      "original_level": "Courant"
+    },
+    {
+      "language": "English",
+      "level": "Intermediate",
+      "original_level": "Intermédiaire"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Operations Management Certificate",
+      "issuer": "Open Learning Academy",
+      "date": "2024",
+      "credential_id": null
+    }
+  ],
+  "education": [
+    {
+      "degree": "Licence",
+      "field_of_study": "Économie et gestion",
+      "institution": "Institut Horizon",
+      "location": "Rabat",
+      "start_date": "2018",
+      "end_date": "2021",
+      "description": null
+    },
+    {
+      "degree": "Baccalauréat",
+      "field_of_study": "Sciences économiques",
+      "institution": "Lycée Nouvelle Rive",
+      "location": "Rabat",
+      "start_date": null,
+      "end_date": "2018",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Operations Specialist",
+      "company": "Lumen Services",
+      "location": "Rabat",
+      "start_date": "2024",
+      "end_date": "Présent",
+      "description": "Coordination des activités et suivi des indicateurs opérationnels."
+    },
+    {
+      "job_title": "Project Coordinator",
+      "company": "Cedar Works",
+      "location": "Casablanca",
+      "start_date": "2022",
+      "end_date": "2024",
+      "description": "Planification des livrables et préparation des comptes rendus."
+    },
+    {
+      "job_title": "Administrative Assistant",
+      "company": "Atlas Office",
+      "location": "Agadir",
+      "start_date": "2021",
+      "end_date": "2022",
+      "description": "Gestion documentaire et accueil des partenaires."
+    },
+    {
+      "job_title": "Operations Intern",
+      "company": "Nova Transit",
+      "location": "Marrakech",
+      "start_date": "2020",
+      "end_date": "2021",
+      "description": "Observation des flux et mise à jour des tableaux de suivi."
+    }
+  ]
+}

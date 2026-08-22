@@ -1,0 +1,59 @@
+{
+  "identity": {
+    "full_name": "Jonas Reed",
+    "email": "jonas.reed@example.com",
+    "phone": "+212 600 000 012",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "London, United Kingdom",
+    "job_title": "Service Coordinator",
+    "other_links": []
+  },
+  "summary": "Service coordinator experienced in operational support and customer delivery.",
+  "skills": [
+    {
+      "name": "Excel"
+    },
+    {
+      "name": "Customer Service"
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native",
+      "original_level": "Native"
+    }
+  ],
+  "certifications": [],
+  "education": [
+    {
+      "degree": "Bachelor",
+      "field_of_study": "Business Operations",
+      "institution": "Southbank College",
+      "location": "London",
+      "start_date": "2017",
+      "end_date": "2019",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Service Coordinator",
+      "company": "Fictional North Services",
+      "location": "London",
+      "start_date": "January 2022",
+      "end_date": "Present",
+      "description": "Coordinated service requests, tracked delivery issues and prepared weekly operational reports."
+    },
+    {
+      "job_title": "Operations Assistant",
+      "company": "Fictional Cedar Office",
+      "location": "London",
+      "start_date": "March 2019",
+      "end_date": "December 2021",
+      "description": "Maintained records, supported suppliers and organized customer documentation."
+    }
+  ]
+}

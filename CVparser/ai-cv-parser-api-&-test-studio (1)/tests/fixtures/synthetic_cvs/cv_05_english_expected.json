@@ -1,0 +1,77 @@
+{
+  "identity": {
+    "full_name": "Nadia Karim",
+    "email": "nadia.karim@example.com",
+    "phone": "+212 600 000 505",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "London, United Kingdom",
+    "job_title": "Machine Learning Engineer",
+    "other_links": []
+  },
+  "summary": "Machine learning engineer building reproducible data pipelines and monitored predictive services.",
+  "skills": [
+    {
+      "name": "Python"
+    },
+    {
+      "name": "Machine Learning"
+    },
+    {
+      "name": "Scikit-learn"
+    },
+    {
+      "name": "TensorFlow"
+    },
+    {
+      "name": "Pandas"
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent",
+      "original_level": "Fluent"
+    },
+    {
+      "language": "French",
+      "level": "Intermediate",
+      "original_level": "Intermediate"
+    },
+    {
+      "language": "Arabic",
+      "level": "Native",
+      "original_level": "Native"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Machine Learning Specialization",
+      "issuer": "Coursera",
+      "date": "2024",
+      "credential_id": null
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master",
+      "field_of_study": "Artificial Intelligence",
+      "institution": "Westbridge University",
+      "location": "London",
+      "start_date": "2021",
+      "end_date": "2023",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Machine Learning Engineer",
+      "company": "Synthetic Vision Labs",
+      "location": "London",
+      "start_date": "Jan 2024",
+      "end_date": "Present",
+      "description": "Built evaluation pipelines and deployed monitored prediction services."
+    }
+  ]
+}

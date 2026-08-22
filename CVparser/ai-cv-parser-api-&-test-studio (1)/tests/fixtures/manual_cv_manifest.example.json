@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "case_id": "cv-example-001",
+      "filename": "replace-with-approved-test-cv.pdf",
+      "language": "en",
+      "layout_type": "single_column",
+      "page_count": 1,
+      "scanned": false,
+      "profession": "software_engineer",
+      "expected_json_file": "cv-example-001.expected.json",
+      "status": "not_tested",
+      "notes": "Do not commit real personal CV files."
+    }
+  ]
+}

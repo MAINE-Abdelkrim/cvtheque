@@ -1,0 +1,150 @@
+{
+  "artifact_version": 1,
+  "run_id": "13cadad6-4760-411e-842c-f0899fb93b59",
+  "status": "completed",
+  "mode": "single_question_diagnostic",
+  "model": "gemini-3.6-flash",
+  "synthetic_data_only": true,
+  "attempt_ceiling": 2,
+  "selected_scenarios": [
+    "single_question_diagnostic"
+  ],
+  "completed_scenarios": [
+    "single_question_diagnostic"
+  ],
+  "current_scenario": null,
+  "operations": {
+    "attempts_sent": 2,
+    "attempts_blocked": 0,
+    "successes": 0,
+    "timeouts": 0,
+    "provider_unavailable": 2,
+    "invalid_responses": 0,
+    "validation_failures": 0,
+    "retries": 1,
+    "fallback_activations": 1,
+    "fallback_successes": 1,
+    "fallback_failures": 0,
+    "accepted_operations": 1
+  },
+  "operation_events": [
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "single_question_diagnostic"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "single_question_diagnostic",
+      "provider_failure_cause": "RATE_LIMIT"
+    },
+    {
+      "event": "retry_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "single_question_diagnostic"
+    },
+    {
+      "event": "gemini_attempt_started",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "single_question_diagnostic"
+    },
+    {
+      "event": "gemini_unavailable",
+      "operation": "generate_question",
+      "provider": "gemini",
+      "scenario": "single_question_diagnostic",
+      "provider_failure_cause": "RATE_LIMIT"
+    },
+    {
+      "event": "fallback_activated",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "single_question_diagnostic"
+    },
+    {
+      "event": "fallback_succeeded",
+      "operation": "generate_question",
+      "provider": "mock",
+      "scenario": "single_question_diagnostic"
+    }
+  ],
+  "accepted_outputs": [
+    {
+      "operation": "generate_question",
+      "scenario": "single_question_diagnostic",
+      "result": {
+        "question_id": "dd62bbaf-6068-581c-bed8-746fbcf3d045",
+        "category": "technical",
+        "question": "Your CV lists Python, which is also relevant to this role. What factors would you consider when applying it?",
+        "based_on": [
+          "cv:skill:Python",
+          "job:skill:Python"
+        ],
+        "difficulty": "easy"
+      }
+    }
+  ],
+  "scenarios": {
+    "single_question_diagnostic": {
+      "operation": "generate_question",
+      "intent": {
+        "category": "technical",
+        "topic": "Python",
+        "difficulty": "easy",
+        "grounding_policy": "skill_only",
+        "source_reference_types": [
+          "cv",
+          "job"
+        ]
+      },
+      "gemini_produced_parsed_domain_question": false,
+      "application_validation_accepted": false,
+      "fallback_activated": true,
+      "fallback_result_accepted": true,
+      "accepted_question": {
+        "question_id": "dd62bbaf-6068-581c-bed8-746fbcf3d045",
+        "category": "technical",
+        "question": "Your CV lists Python, which is also relevant to this role. What factors would you consider when applying it?",
+        "based_on": [
+          "cv:skill:Python",
+          "job:skill:Python"
+        ],
+        "difficulty": "easy"
+      }
+    }
+  },
+  "preflight": null,
+  "failure": null,
+  "diagnostic": {
+    "operation": "generate_question",
+    "intent": {
+      "category": "technical",
+      "topic": "Python",
+      "difficulty": "easy",
+      "grounding_policy": "skill_only",
+      "source_reference_types": [
+        "cv",
+        "job"
+      ]
+    },
+    "gemini_produced_parsed_domain_question": false,
+    "application_validation_accepted": false,
+    "fallback_activated": true,
+    "fallback_result_accepted": true,
+    "accepted_question": {
+      "question_id": "dd62bbaf-6068-581c-bed8-746fbcf3d045",
+      "category": "technical",
+      "question": "Your CV lists Python, which is also relevant to this role. What factors would you consider when applying it?",
+      "based_on": [
+        "cv:skill:Python",
+        "job:skill:Python"
+      ],
+      "difficulty": "easy"
+    }
+  }
+}

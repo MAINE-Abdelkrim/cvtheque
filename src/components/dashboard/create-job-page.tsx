@@ -1,761 +1,190 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../providers/auth-provider';
-import { dbEngine } from '../../lib/firebase/db';
-import { JobPosting, EducationRequirement, LanguageRequirement } from '../../types';
-import { 
-  Sparkles, 
-  Send, 
-  CheckCircle2, 
-  ArrowLeft, 
-  Briefcase, 
-  Building, 
-  MapPin, 
-  Code, 
-  GraduationCap, 
-  Languages, 
-  Clock, 
-  Zap, 
-  Plus, 
-  X,
-  FileText,
-  Lock,
-  Layers
-} from 'lucide-react';
+import { ArrowLeft, FileInput, Loader2, PenLine } from 'lucide-react';
 import { toast } from 'sonner';
+import { LanguagesField } from '../job/languages-field';
+import { StringListField } from '../job/string-list-field';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader } from '../ui/card';
+import { FormField, Input, Select, Textarea } from '../ui/form-controls';
+import { PageHeader, SectionHeader } from '../ui/page-header';
+import { createCanonicalJob, generateJobDraft, JobClientError } from '../../lib/api/job-client';
+import { useAuth } from '../../providers/auth-provider';
+import type { LanguageRequirement } from '../../types';
+import { canonicalJobInputSchema, type CanonicalJobInput, type GeminiJobDraft } from '../../types/job';
 
-interface CreateJobPageProps {
-  onNavigate: (path: string) => void;
-}
+interface CreateJobPageProps { onNavigate: (path: string) => void; }
+type CreationMethod = 'manual' | 'import';
+type FieldErrors = Partial<Record<keyof CanonicalJobInput | 'form', string>>;
 
 export const CreateJobPage: React.FC<CreateJobPageProps> = ({ onNavigate }) => {
   const { profile } = useAuth();
-  const isPremium = profile?.subscription === 'PREMIUM' || profile?.role === 'ADMIN';
-
-  // Chat Layer state (Gemini LLM)
-  const [chatInput, setChatInput] = useState('');
-  const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
-    {
-      role: 'assistant',
-      content: 'Bonjour ! Je suis votre assistant IA Recrutement. Décrivez-moi le poste que vous recherchez (ex: "Je cherche un développeur Backend Python avec 3 ans d\'expérience à Casablanca en mode hybride...") et je générerai la fiche de poste structurée pour vous.'
-    }
-  ]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [lastExtractedJson, setLastExtractedJson] = useState<any>(null);
-
-  // Form State (Full Job Schema)
-  const [jobTitle, setJobTitle] = useState('Backend Developer');
-  const [company, setCompany] = useState('TechFlow Systems');
-  const [location, setLocation] = useState('Casablanca');
-  const [description, setDescription] = useState('Nous recherchons un développeur backend chevronné pour concevoir et optimiser nos microservices.');
-  const [contractType, setContractType] = useState<'CDI' | 'CDD' | 'Freelance' | 'Stage' | 'Alternance'>('CDI');
-  const [workMode, setWorkMode] = useState<'onsite' | 'hybrid' | 'remote'>('hybrid');
-  const [remoteAllowed, setRemoteAllowed] = useState(true);
-  
-  const [minExpYears, setMinExpYears] = useState<number>(3);
-  const [maxExpYears, setMaxExpYears] = useState<number | ''>('');
-
-  // Skills
-  const [requiredSkills, setRequiredSkills] = useState<string[]>(['Python', 'FastAPI', 'PostgreSQL']);
-  const [newReqSkill, setNewReqSkill] = useState('');
-
-  const [preferredSkills, setPreferredSkills] = useState<string[]>(['Docker', 'AWS']);
-  const [newPrefSkill, setNewPrefSkill] = useState('');
-
-  // Education
-  const [eduMinLevel, setEduMinLevel] = useState('Master');
-  const [eduFields, setEduFields] = useState<string[]>(['Computer Science', 'Software Engineering']);
-  const [newEduField, setNewEduField] = useState('');
-  const [eduMandatory, setEduMandatory] = useState(false);
-
-  // Languages
-  const [languages, setLanguages] = useState<LanguageRequirement[]>([
-    { name: 'French', minimum_level: 'fluent', mandatory: true },
-    { name: 'English', minimum_level: 'intermediate', mandatory: false }
-  ]);
-  const [newLangName, setNewLangName] = useState('');
-  const [newLangLevel, setNewLangLevel] = useState('intermediate');
-  const [newLangMandatory, setNewLangMandatory] = useState(false);
-
-  // Mandatory requirements
-  const [mandatoryReqs, setMandatoryReqs] = useState<string[]>(['Disponibilité sous 30 jours']);
-  const [newMandatoryReq, setNewMandatoryReq] = useState('');
-
+  const canImport = profile?.subscription === 'PREMIUM' || profile?.role === 'ADMIN';
+  const [method, setMethod] = useState<CreationMethod>('manual');
+  const [sourceDescription, setSourceDescription] = useState('');
+  const [extracting, setExtracting] = useState(false);
+  const [importMessage, setImportMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
 
-  // Gemini LLM Chat submit handler
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || isGenerating) return;
+  const [jobTitle, setJobTitle] = useState('');
+  const [company, setCompany] = useState('');
+  const [location, setLocation] = useState('');
+  const [description, setDescription] = useState('');
+  const [contractType, setContractType] = useState<CanonicalJobInput['contract_type']>('CDI');
+  const [workMode, setWorkMode] = useState<CanonicalJobInput['work_mode']>('hybrid');
+  const [remoteAllowed, setRemoteAllowed] = useState(true);
+  const [minExpYears, setMinExpYears] = useState(0);
+  const [maxExpYears, setMaxExpYears] = useState<number | ''>('');
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [preferredSkills, setPreferredSkills] = useState<string[]>([]);
+  const [eduMinLevel, setEduMinLevel] = useState('');
+  const [eduFields, setEduFields] = useState<string[]>([]);
+  const [eduMandatory, setEduMandatory] = useState(false);
+  const [languages, setLanguages] = useState<LanguageRequirement[]>([]);
+  const [mandatoryReqs, setMandatoryReqs] = useState<string[]>([]);
 
-    const userMessage = chatInput.trim();
-    setChatInput('');
-    setChatHistory(prev => [...prev, { role: 'user', content: userMessage }]);
-    setIsGenerating(true);
+  const payload = (): CanonicalJobInput => ({
+    title: jobTitle,
+    company,
+    location,
+    description,
+    required_skills: requiredSkills,
+    preferred_skills: preferredSkills,
+    minimum_experience_years: minExpYears,
+    maximum_experience_years: maxExpYears === '' ? null : Number(maxExpYears),
+    required_education: { minimum_level: eduMinLevel, preferred_fields: eduFields, mandatory: eduMandatory },
+    required_languages: languages,
+    remote_allowed: remoteAllowed,
+    work_mode: workMode,
+    contract_type: contractType,
+    mandatory_requirements: mandatoryReqs,
+  });
 
+  const applyDraft = (draft: GeminiJobDraft) => {
+    if (draft.job_title !== undefined) setJobTitle(draft.job_title);
+    if (draft.company !== undefined) setCompany(draft.company);
+    if (draft.location !== undefined) setLocation(draft.location);
+    if (draft.description !== undefined) setDescription(draft.description);
+    if (draft.contract_type !== undefined) setContractType(draft.contract_type);
+    if (draft.work_mode !== undefined) {
+      setWorkMode(draft.work_mode);
+      if (draft.work_mode === 'remote') setRemoteAllowed(true);
+      else if (draft.work_mode === 'onsite') setRemoteAllowed(false);
+      else if (draft.remote_allowed !== undefined) setRemoteAllowed(draft.remote_allowed);
+    } else if (draft.remote_allowed !== undefined) setRemoteAllowed(draft.remote_allowed);
+    if (draft.minimum_experience_years !== undefined) setMinExpYears(draft.minimum_experience_years);
+    if (draft.maximum_experience_years !== undefined) setMaxExpYears(draft.maximum_experience_years ?? '');
+    if (draft.required_skills !== undefined) setRequiredSkills(draft.required_skills);
+    if (draft.preferred_skills !== undefined) setPreferredSkills(draft.preferred_skills);
+    if (draft.required_education !== undefined) {
+      setEduMinLevel(draft.required_education.minimum_level);
+      setEduFields(draft.required_education.preferred_fields);
+      setEduMandatory(draft.required_education.mandatory);
+    }
+    if (draft.required_languages !== undefined) setLanguages(draft.required_languages);
+    if (draft.mandatory_requirements !== undefined) setMandatoryReqs(draft.mandatory_requirements);
+  };
+
+  const extractDescription = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!sourceDescription.trim() || extracting || !canImport) return;
+    setExtracting(true);
+    setImportMessage(null);
     try {
-      const response = await fetch('/api/jobs/ai-generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: userMessage,
-          conversationHistory: chatHistory
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur du service IA Gemini');
-      }
-
-      setChatHistory(prev => [...prev, { role: 'assistant', content: data.reply }]);
-
-      if (data.extractedJson) {
-        setLastExtractedJson(data.extractedJson);
-        toast.success('Fiche de poste générée par l\'IA ! Vous pouvez pré-remplir les champs ci-dessous.');
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Impossible de joindre Gemini LLM.');
+      const result = await generateJobDraft(sourceDescription.trim(), []);
+      if (!result.draft || result.invalidDraft) throw new Error('INVALID_DRAFT');
+      applyDraft(result.draft);
+      setMethod('manual');
+      setErrors({});
+      setImportMessage({ tone: 'success', text: 'Les informations ont été extraites. Vérifiez-les avant de créer l’offre.' });
+    } catch (error) {
+      const message = error instanceof JobClientError && error.code === 'PREMIUM_REQUIRED'
+        ? 'L’import de description n’est pas disponible avec votre compte.'
+        : 'Impossible d’extraire les informations de cette description. Vous pouvez réessayer ou compléter l’offre manuellement.';
+      setImportMessage({ tone: 'error', text: message });
     } finally {
-      setIsGenerating(false);
+      setExtracting(false);
     }
   };
 
-  // Pre-fill form from Gemini Extracted JSON
-  const applyExtractedJson = (json: any) => {
-    if (!json) return;
-
-    if (json.job_title) setJobTitle(json.job_title);
-    if (json.company) setCompany(json.company);
-    if (json.location) setLocation(json.location);
-    if (json.description) setDescription(json.description);
-    if (json.contract_type) setContractType(json.contract_type);
-    if (json.work_mode) setWorkMode(json.work_mode);
-    if (typeof json.remote_allowed === 'boolean') setRemoteAllowed(json.remote_allowed);
-    
-    if (typeof json.minimum_experience_years === 'number') setMinExpYears(json.minimum_experience_years);
-    if (json.maximum_experience_years !== undefined) setMaxExpYears(json.maximum_experience_years ?? '');
-
-    if (Array.isArray(json.required_skills)) setRequiredSkills(json.required_skills);
-    if (Array.isArray(json.preferred_skills)) setPreferredSkills(json.preferred_skills);
-
-    if (json.required_education) {
-      if (json.required_education.minimum_level) setEduMinLevel(json.required_education.minimum_level);
-      if (Array.isArray(json.required_education.preferred_fields)) setEduFields(json.required_education.preferred_fields);
-      if (typeof json.required_education.mandatory === 'boolean') setEduMandatory(json.required_education.mandatory);
-    }
-
-    if (Array.isArray(json.required_languages)) {
-      setLanguages(json.required_languages);
-    }
-
-    if (Array.isArray(json.mandatory_requirements)) {
-      setMandatoryReqs(json.mandatory_requirements);
-    }
-
-    toast.success('Champs pré-remplis automatiquement avec succès !');
+  const changeWorkMode = (mode: NonNullable<CanonicalJobInput['work_mode']>) => {
+    setWorkMode(mode);
+    if (mode === 'remote') setRemoteAllowed(true);
+    if (mode === 'onsite') setRemoteAllowed(false);
   };
 
-  // Submit & Save Job
-  const handleFinalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!jobTitle || !company || !location || !description) {
-      toast.error('Veuillez remplir les informations obligatoires (Titre, Entreprise, Ville, Description).');
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+    const parsed = canonicalJobInputSchema.safeParse(payload());
+    if (!parsed.success) {
+      const next: FieldErrors = {};
+      parsed.error.issues.forEach(issue => { const field = issue.path[0] as keyof CanonicalJobInput; if (!next[field]) next[field] = 'Vérifiez cette valeur.'; });
+      setErrors({ ...next, form: 'Certains champs doivent être corrigés avant la création.' });
       return;
     }
-
+    setErrors({});
     setIsSubmitting(true);
     try {
-      const newJobPayload: Omit<JobPosting, 'id' | 'createdAt'> = {
-        recruiterId: profile?.uid || 'recruiter-123',
-        title: jobTitle,
-        company,
-        location,
-        description,
-        required_skills: requiredSkills,
-        preferred_skills: preferredSkills,
-        minimum_experience_years: minExpYears,
-        maximum_experience_years: maxExpYears === '' ? null : Number(maxExpYears),
-        required_education: {
-          minimum_level: eduMinLevel,
-          preferred_fields: eduFields,
-          mandatory: eduMandatory
-        },
-        required_languages: languages,
-        remote_allowed: remoteAllowed,
-        work_mode: workMode,
-        contract_type: contractType,
-        mandatory_requirements: mandatoryReqs,
-        status: 'OPEN'
-      };
-
-      await dbEngine.createJob(newJobPayload);
-      toast.success('Fiche de poste créée avec succès !');
+      await createCanonicalJob(parsed.data);
+      toast.success('Offre créée avec succès.');
       onNavigate('/dashboard/recruiter');
-    } catch (err: any) {
-      toast.error('Erreur lors de la création de la fiche de poste.');
+    } catch (error) {
+      const message = error instanceof JobClientError && error.code === 'JOB_VALIDATION_FAILED'
+        ? 'Certaines informations ne sont pas valides. Vérifiez le formulaire.'
+        : 'Impossible de créer l’offre pour le moment. Vos informations ont été conservées.';
+      setErrors({ form: message });
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-16 select-none">
-      {/* Top Header */}
-      <div className="flex items-center justify-between border-b border-slate-900 pb-5">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => onNavigate('/dashboard/recruiter')}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 cursor-pointer transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-bold font-display text-white">Création de Fiche de Poste</h2>
-              {isPremium ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-purple-400" />
-                  PREMIUM AI
-                </span>
-              ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                  STANDARD
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Définissez tous les critères d'adéquation sémantique pour le ciblage des CVs.
-            </p>
-          </div>
-        </div>
+  return <main className="mx-auto max-w-5xl space-y-8 pb-12">
+    <PageHeader title="Créer une offre" description="Renseignez les critères du poste manuellement ou importez une description existante." actions={<Button variant="outline" onClick={() => onNavigate('/dashboard/recruiter')}><ArrowLeft className="h-4 w-4" />Retour aux offres</Button>} />
+
+    <section aria-labelledby="creation-method-title" className="space-y-3">
+      <h2 id="creation-method-title" className="text-sm font-medium text-[var(--foreground)]">Méthode de saisie</h2>
+      <div className="inline-flex w-full rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] p-1 sm:w-auto" role="group" aria-label="Méthode de création">
+        <Button variant={method === 'manual' ? 'secondary' : 'ghost'} aria-pressed={method === 'manual'} onClick={() => setMethod('manual')} className="flex-1 sm:flex-none"><PenLine className="h-4 w-4" />Remplir manuellement</Button>
+        <Button variant={method === 'import' ? 'secondary' : 'ghost'} aria-pressed={method === 'import'} disabled={!canImport} onClick={() => setMethod('import')} className="flex-1 sm:flex-none"><FileInput className="h-4 w-4" />Importer une description</Button>
       </div>
+      {!canImport && <p className="text-xs text-[var(--muted-foreground)]">L’import de description est disponible pour les comptes autorisés. Le formulaire manuel reste entièrement accessible.</p>}
+    </section>
 
-      {/* MULTI-LAYER 1: PREMIUM GEMINI LLM ASSISTANT CHAT */}
-      {isPremium ? (
-        <div className="glass-card rounded-2xl border border-purple-500/20 p-6 bg-slate-950/80 relative overflow-hidden shadow-xl shadow-purple-900/10">
-          <div className="absolute -right-12 -top-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-900">
-            <div className="flex items-center space-x-2.5">
-              <div className="p-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-xl">
-                <Sparkles className="w-4 h-4 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-white font-display">Couche 1 : Assistant Recrutement Gemini LLM</h3>
-                <p className="text-[11px] text-slate-400">Échangez avec l'IA pour définir votre poste et pré-remplir automatiquement les paramètres.</p>
-              </div>
-            </div>
-            
-            {lastExtractedJson && (
-              <button
-                type="button"
-                onClick={() => applyExtractedJson(lastExtractedJson)}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-bold cursor-pointer transition-all shadow-md shadow-purple-500/20 flex items-center space-x-1.5 animate-bounce"
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Pré-remplir la fiche de poste</span>
-              </button>
-            )}
-          </div>
+    {method === 'import' && <Card>
+      <CardHeader><SectionHeader title="Importer une description" description="Les informations extraites seront ajoutées au formulaire pour vérification." /></CardHeader>
+      <CardContent><form onSubmit={extractDescription} className="space-y-4" aria-busy={extracting}><FormField label="Description de l’offre" htmlFor="source-description" helperText="Collez ici le contenu de l’offre que vous souhaitez structurer." required><Textarea id="source-description" rows={10} value={sourceDescription} onChange={event => setSourceDescription(event.target.value)} disabled={extracting} /></FormField>{importMessage && <p role={importMessage.tone === 'error' ? 'alert' : 'status'} className={`rounded-lg border p-3 text-sm ${importMessage.tone === 'error' ? 'border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[color-mix(in_srgb,var(--danger)_7%,transparent)] text-[var(--danger)]' : 'border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] text-[var(--success)]'}`}>{importMessage.text}</p>}<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="outline" onClick={() => setMethod('manual')}>Continuer manuellement</Button><Button type="submit" disabled={extracting || !sourceDescription.trim()}>{extracting ? <><Loader2 className="h-4 w-4 animate-spin" />Extraction des informations de l’offre…</> : 'Extraire les informations'}</Button></div></form></CardContent>
+    </Card>}
 
-          {/* Chat Messages Container */}
-          <div className="space-y-3 max-h-60 overflow-y-auto pr-2 mb-4">
-            {chatHistory.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-2xl px-4 py-2.5 rounded-2xl text-xs leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-purple-600 text-white font-medium rounded-br-none shadow-md'
-                      : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none font-sans'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                </div>
-              </div>
-            ))}
-            {isGenerating && (
-              <div className="flex justify-start">
-                <div className="bg-slate-900 border border-slate-800 text-purple-400 px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2">
-                  <Clock className="w-3.5 h-3.5 animate-spin" />
-                  <span>Gemini LLM analyse votre requête et structure les données...</span>
-                </div>
-              </div>
-            )}
-          </div>
+    {importMessage?.tone === 'success' && method === 'manual' && <p role="status" className="rounded-lg border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] p-3 text-sm text-[var(--success)]">{importMessage.text}</p>}
 
-          {/* Chat Input Form */}
-          <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="ex: Je cherche un développeur Backend Python avec 3 ans d'exp à Casablanca en CDI..."
-              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all font-sans"
-            />
-            <button
-              type="submit"
-              disabled={isGenerating || !chatInput.trim()}
-              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-semibold cursor-pointer transition-all flex items-center space-x-1.5 shrink-0"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Générer</span>
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 flex items-start space-x-3 text-xs">
-          <Lock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold text-amber-300">Option AI Generation disponible en mode PREMIUM</p>
-            <p className="text-[11px] text-amber-300/80 mt-0.5">
-              Les utilisateurs PREMIUM bénéficient d'un assistant conversant Gemini LLM multi-couches qui remplit et formate automatiquement l'ensemble des critères ci-dessous. En mode Standard, veuillez remplir le formulaire manuellement.
-            </p>
-          </div>
-        </div>
-      )}
+    <form onSubmit={submit} className="space-y-6" aria-busy={isSubmitting} noValidate>
+      <FormSection title="Informations générales" description="Présentez clairement le poste et l’entreprise.">
+        <div className="grid gap-4 sm:grid-cols-2"><FormField label="Intitulé du poste" htmlFor="job-title" required error={errors.title}><Input id="job-title" value={jobTitle} onChange={event => setJobTitle(event.target.value)} disabled={isSubmitting} /></FormField><FormField label="Entreprise" htmlFor="company" required error={errors.company}><Input id="company" value={company} onChange={event => setCompany(event.target.value)} disabled={isSubmitting} /></FormField><FormField label="Localisation" htmlFor="location" required error={errors.location}><Input id="location" value={location} onChange={event => setLocation(event.target.value)} disabled={isSubmitting} /></FormField></div>
+      </FormSection>
 
-      {/* MULTI-LAYER 2 & 3: FULL EDITABLE FORM WITH MANUAL ADJUSTMENTS */}
-      <form onSubmit={handleFinalSubmit} className="space-y-8">
-        <div className="glass-card rounded-2xl border border-slate-800/80 p-6 space-y-6 bg-slate-950/60">
-          <div className="flex items-center space-x-2 pb-3 border-b border-slate-900 text-slate-300">
-            <Briefcase className="w-4 h-4 text-blue-400" />
-            <h3 className="text-sm font-bold font-display text-white">Couche 2 : Informations Générales & Contrat</h3>
-          </div>
+      <FormSection title="Conditions du poste" description="Définissez le contrat et l’organisation du travail.">
+        <div className="grid gap-4 sm:grid-cols-2"><FormField label="Type de contrat" htmlFor="contract-type"><Select id="contract-type" value={contractType ?? ''} onChange={event => setContractType(event.target.value as CanonicalJobInput['contract_type'])}><option value="CDI">CDI</option><option value="CDD">CDD</option><option value="Freelance">Freelance</option><option value="Stage">Stage</option><option value="Alternance">Alternance</option></Select></FormField><FormField label="Mode de travail" htmlFor="work-mode"><Select id="work-mode" value={workMode ?? ''} onChange={event => changeWorkMode(event.target.value as NonNullable<CanonicalJobInput['work_mode']>)}><option value="onsite">Sur site</option><option value="hybrid">Hybride</option><option value="remote">À distance</option></Select></FormField></div>
+        <label className="flex items-start gap-3 rounded-lg border border-[var(--border)] p-3 text-sm"><input type="checkbox" checked={remoteAllowed} disabled={workMode === 'remote' || workMode === 'onsite'} onChange={event => setRemoteAllowed(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-[var(--border-strong)] accent-[var(--primary)]" /><span><span className="font-medium text-[var(--foreground)]">Télétravail autorisé</span><span className="mt-0.5 block text-xs text-[var(--muted-foreground)]">Ce réglage est fixé automatiquement pour les modes sur site et à distance.</span></span></label>
+      </FormSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Intitulé du poste (`job_title`)</label>
-              <input
-                type="text"
-                required
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-                placeholder="ex: Backend Developer"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
+      <FormSection title="Compétences" description="Séparez les compétences indispensables des compétences appréciées."><div className="grid gap-6 lg:grid-cols-2"><StringListField id="required-skills" label="Compétences requises" values={requiredSkills} onChange={setRequiredSkills} placeholder="Ex. Python" /><StringListField id="preferred-skills" label="Compétences souhaitées" values={preferredSkills} onChange={setPreferredSkills} placeholder="Ex. Docker" /></div></FormSection>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Entreprise (`company`)</label>
-              <input
-                type="text"
-                required
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="ex: TechFlow"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
+      <FormSection title="Expérience et formation" description="Précisez les prérequis utiles à l’évaluation des candidatures.">
+        <div className="grid gap-4 sm:grid-cols-2"><FormField label="Expérience minimale (années)" htmlFor="min-experience" error={errors.minimum_experience_years}><Input id="min-experience" type="number" min={0} max={80} value={minExpYears} onChange={event => setMinExpYears(Number(event.target.value))} /></FormField><FormField label="Expérience maximale (années)" htmlFor="max-experience" error={errors.maximum_experience_years} helperText="Laissez vide si aucune limite ne s’applique."><Input id="max-experience" type="number" min={0} max={80} value={maxExpYears} onChange={event => setMaxExpYears(event.target.value === '' ? '' : Number(event.target.value))} /></FormField><FormField label="Niveau d’études minimum" htmlFor="education-level"><Input id="education-level" value={eduMinLevel} onChange={event => setEduMinLevel(event.target.value)} placeholder="Ex. Master" /></FormField><label className="flex min-h-10 items-center gap-2 self-end text-sm text-[var(--foreground)]"><input type="checkbox" checked={eduMandatory} onChange={event => setEduMandatory(event.target.checked)} className="h-4 w-4 rounded accent-[var(--primary)]" />Diplôme obligatoire</label></div>
+        <StringListField id="education-fields" label="Filières souhaitées" values={eduFields} onChange={setEduFields} placeholder="Ex. Informatique" />
+      </FormSection>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Localisation (`location`)</label>
-              <input
-                type="text"
-                required
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="ex: Casablanca"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
+      <FormSection title="Langues"><LanguagesField values={languages} onChange={setLanguages} /></FormSection>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Type de contrat (`contract_type`)</label>
-              <select
-                value={contractType}
-                onChange={(e) => setContractType(e.target.value as any)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
-              >
-                <option value="CDI">CDI</option>
-                <option value="CDD">CDD</option>
-                <option value="Freelance">Freelance</option>
-                <option value="Stage">Stage</option>
-                <option value="Alternance">Alternance</option>
-              </select>
-            </div>
+      <FormSection title="Description" description="Décrivez les missions, responsabilités et contexte du poste."><FormField label="Description du poste" htmlFor="job-description" required error={errors.description}><Textarea id="job-description" rows={8} value={description} onChange={event => setDescription(event.target.value)} /></FormField><StringListField id="mandatory-requirements" label="Exigences spécifiques" values={mandatoryReqs} onChange={setMandatoryReqs} placeholder="Ex. Disponibilité sous 30 jours" helperText="Ces exigences restent descriptives dans la version actuelle du matching." /></FormSection>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Mode de travail (`work_mode`)</label>
-              <select
-                value={workMode}
-                onChange={(e) => setWorkMode(e.target.value as any)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
-              >
-                <option value="onsite">Sur site</option>
-                <option value="hybrid">Hybride</option>
-                <option value="remote">Télétravail à 100%</option>
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-3 pt-6">
-              <input
-                type="checkbox"
-                id="remote_allowed"
-                checked={remoteAllowed}
-                onChange={(e) => setRemoteAllowed(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-800 bg-slate-900 text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <label htmlFor="remote_allowed" className="text-xs text-slate-300 cursor-pointer select-none">
-                Télétravail autorisé (`remote_allowed`)
-              </label>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-300">Description générale du poste (`description`)</label>
-            <textarea
-              required
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Explication synthétique de la mission..."
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-blue-500 resize-none font-sans"
-            />
-          </div>
-        </div>
-
-        {/* EXPERIENCE & SKILLS SECTION */}
-        <div className="glass-card rounded-2xl border border-slate-800/80 p-6 space-y-6 bg-slate-950/60">
-          <div className="flex items-center space-x-2 pb-3 border-b border-slate-900 text-slate-300">
-            <Code className="w-4 h-4 text-purple-400" />
-            <h3 className="text-sm font-bold font-display text-white">Expérience & Compétences Technologiques</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Expérience minimum en années (`minimum_experience_years`)</label>
-              <input
-                type="number"
-                min={0}
-                max={30}
-                value={minExpYears}
-                onChange={(e) => setMinExpYears(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-purple-500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Expérience maximum (`maximum_experience_years`)</label>
-              <input
-                type="number"
-                min={0}
-                max={30}
-                placeholder="Optionnel"
-                value={maxExpYears}
-                onChange={(e) => setMaxExpYears(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-purple-500"
-              />
-            </div>
-          </div>
-
-          {/* REQUIRED SKILLS */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300">Compétences obligatoires (`required_skills`)</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {requiredSkills.map((skill, idx) => (
-                <span key={idx} className="px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs flex items-center gap-1.5 font-mono">
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => setRequiredSkills(requiredSkills.filter((_, i) => i !== idx))}
-                    className="text-slate-400 hover:text-white cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={newReqSkill}
-                onChange={(e) => setNewReqSkill(e.target.value)}
-                placeholder="ex: Python, FastAPI..."
-                className="flex-1 px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-purple-500 font-mono"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (newReqSkill.trim()) {
-                    setRequiredSkills([...requiredSkills, newReqSkill.trim()]);
-                    setNewReqSkill('');
-                  }
-                }}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs cursor-pointer"
-              >
-                Ajouter
-              </button>
-            </div>
-          </div>
-
-          {/* PREFERRED SKILLS */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300">Compétences appréciées (`preferred_skills`)</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {preferredSkills.map((skill, idx) => (
-                <span key={idx} className="px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs flex items-center gap-1.5 font-mono">
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => setPreferredSkills(preferredSkills.filter((_, i) => i !== idx))}
-                    className="text-slate-400 hover:text-white cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={newPrefSkill}
-                onChange={(e) => setNewPrefSkill(e.target.value)}
-                placeholder="ex: Docker, AWS..."
-                className="flex-1 px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (newPrefSkill.trim()) {
-                    setPreferredSkills([...preferredSkills, newPrefSkill.trim()]);
-                    setNewPrefSkill('');
-                  }
-                }}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs cursor-pointer"
-              >
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* EDUCATION & LANGUAGES SECTION */}
-        <div className="glass-card rounded-2xl border border-slate-800/80 p-6 space-y-6 bg-slate-950/60">
-          <div className="flex items-center space-x-2 pb-3 border-b border-slate-900 text-slate-300">
-            <GraduationCap className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold font-display text-white">Éducation & Exigences Linguistiques</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300">Niveau d'études minimum (`minimum_level`)</label>
-              <input
-                type="text"
-                value={eduMinLevel}
-                onChange={(e) => setEduMinLevel(e.target.value)}
-                placeholder="ex: Master"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div className="flex items-center space-x-3 pt-6">
-              <input
-                type="checkbox"
-                id="eduMandatory"
-                checked={eduMandatory}
-                onChange={(e) => setEduMandatory(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-800 bg-slate-900 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-              />
-              <label htmlFor="eduMandatory" className="text-xs text-slate-300 cursor-pointer select-none">
-                Diplôme obligatoire (`mandatory`)
-              </label>
-            </div>
-          </div>
-
-          {/* PREFERRED FIELDS */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300">Filières recommandées (`preferred_fields`)</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {eduFields.map((field, idx) => (
-                <span key={idx} className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1.5 font-mono">
-                  {field}
-                  <button
-                    type="button"
-                    onClick={() => setEduFields(eduFields.filter((_, i) => i !== idx))}
-                    className="text-slate-400 hover:text-white cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={newEduField}
-                onChange={(e) => setNewEduField(e.target.value)}
-                placeholder="ex: Computer Science..."
-                className="flex-1 px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (newEduField.trim()) {
-                    setEduFields([...eduFields, newEduField.trim()]);
-                    setNewEduField('');
-                  }
-                }}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs cursor-pointer"
-              >
-                Ajouter
-              </button>
-            </div>
-          </div>
-
-          {/* LANGUAGES LIST */}
-          <div className="space-y-3 pt-2">
-            <label className="text-xs font-medium text-slate-300 flex items-center space-x-1.5">
-              <Languages className="w-3.5 h-3.5 text-blue-400" />
-              <span>Langues requises (`required_languages`)</span>
-            </label>
-
-            <div className="space-y-2">
-              {languages.map((lang, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-850 text-xs">
-                  <div className="flex items-center space-x-3">
-                    <span className="font-bold text-white font-mono">{lang.name}</span>
-                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                      Niveau: {lang.minimum_level}
-                    </span>
-                    {lang.mandatory && (
-                      <span className="text-[10px] font-mono font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">
-                        Obligatoire
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setLanguages(languages.filter((_, i) => i !== idx))}
-                    className="text-slate-500 hover:text-rose-400 cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-2">
-              <input
-                type="text"
-                value={newLangName}
-                onChange={(e) => setNewLangName(e.target.value)}
-                placeholder="Nom langue (ex: French)"
-                className="px-3 py-2 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white"
-              />
-              <select
-                value={newLangLevel}
-                onChange={(e) => setNewLangLevel(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white"
-              >
-                <option value="beginner">Débutant</option>
-                <option value="intermediate">Intermédiaire</option>
-                <option value="fluent">Courant / Fluent</option>
-                <option value="native">Bilingue / Natif</option>
-              </select>
-              <div className="flex items-center space-x-2 px-2">
-                <input
-                  type="checkbox"
-                  id="newLangMandatory"
-                  checked={newLangMandatory}
-                  onChange={(e) => setNewLangMandatory(e.target.checked)}
-                  className="rounded border-slate-800 bg-slate-900 text-blue-600 cursor-pointer"
-                />
-                <label htmlFor="newLangMandatory" className="text-[11px] text-slate-300 cursor-pointer">
-                  Obligatoire
-                </label>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (newLangName.trim()) {
-                    setLanguages([
-                      ...languages,
-                      { name: newLangName.trim(), minimum_level: newLangLevel, mandatory: newLangMandatory }
-                    ]);
-                    setNewLangName('');
-                  }
-                }}
-                className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer"
-              >
-                + Ajouter langue
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* MANDATORY REQUIREMENTS SECTION */}
-        <div className="glass-card rounded-2xl border border-slate-800/80 p-6 space-y-4 bg-slate-950/60">
-          <label className="text-xs font-medium text-slate-300">Exigences spécifiques / Impératifs (`mandatory_requirements`)</label>
-          <div className="flex flex-wrap gap-2">
-            {mandatoryReqs.map((req, idx) => (
-              <span key={idx} className="px-3 py-1 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 font-sans">
-                {req}
-                <button
-                  type="button"
-                  onClick={() => setMandatoryReqs(mandatoryReqs.filter((_, i) => i !== idx))}
-                  className="text-slate-400 hover:text-white cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            ))}
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="text"
-              value={newMandatoryReq}
-              onChange={(e) => setNewMandatoryReq(e.target.value)}
-              placeholder="ex: Disponibilité sous 30 jours, Mobilité internationale..."
-              className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-900 text-xs text-white"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                if (newMandatoryReq.trim()) {
-                  setMandatoryReqs([...mandatoryReqs, newMandatoryReq.trim()]);
-                  setNewMandatoryReq('');
-                }
-              }}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs cursor-pointer"
-            >
-              Ajouter exigence
-            </button>
-          </div>
-        </div>
-
-        {/* FINAL CONFIRMATION & CREATION BUTTON */}
-        <div className="flex items-center justify-end space-x-4 pt-4 border-t border-slate-900">
-          <button
-            type="button"
-            onClick={() => onNavigate('/dashboard/recruiter')}
-            className="px-5 py-3 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium cursor-pointer transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-xs shadow-xl shadow-indigo-600/20 cursor-pointer transition-all disabled:opacity-50 flex items-center space-x-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Clock className="w-4 h-4 animate-spin" />
-                <span>Création de la fiche de poste...</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Confirmer & Créer la Fiche de Poste</span>
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+      {errors.form && <p role="alert" className="rounded-lg border border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[color-mix(in_srgb,var(--danger)_7%,transparent)] p-3 text-sm text-[var(--danger)]">{errors.form}</p>}
+      <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end"><Button variant="outline" onClick={() => onNavigate('/dashboard/recruiter')} disabled={isSubmitting}>Annuler</Button><Button type="submit" size="lg" disabled={isSubmitting}>{isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Création de l’offre…</> : 'Créer l’offre'}</Button></div>
+    </form>
+  </main>;
 };
+
+const FormSection: React.FC<{ title: string; description?: string; children: React.ReactNode }> = ({ title, description, children }) => <Card><CardHeader><SectionHeader title={title} description={description} /></CardHeader><CardContent className="space-y-5">{children}</CardContent></Card>;

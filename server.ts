@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
@@ -6,18 +7,38 @@ import { getFirebaseAdmin, isFirebaseAdminConfigured } from './src/lib/firebase/
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { v2 as cloudinary } from 'cloudinary';
+import { createRequireCandidate } from './src/server/cv-auth';
+import { createCurrentCVHandler, createCVParseHandler } from './src/server/cv-route';
+import { createRequireRecruiter } from './src/server/recruiter-auth';
+import { createCandidateOpenJobsHandler, createJobCreateHandler, createJobDeleteHandler, createMyJobsHandler } from './src/server/job-route';
+import { extractValidatedGeminiDraft } from './src/server/job-ai';
+import { createJobMatchingHandler } from './src/server/matching-route';
+import { createRequireAdmin } from './src/server/admin-auth';
+import { createAdminUserCreateHandler, createAdminUserDeleteHandler, createAdminUserUpdateHandler } from './src/server/admin-user-route';
+import { publicRegistrationSchema } from './src/types/admin';
+import {
+  createInterviewAnswerHandler,
+  createInterviewCancelHandler,
+  createInterviewGetHandler,
+  createInterviewHistoryHandler,
+  createInterviewReportHandler,
+  createInterviewStartHandler,
+} from './src/server/interview-route';
 
 // Configure Cloudinary using credentials
-let cloudName = process.env.CLOUDINARY_CLOUD_NAME || 's8c3eyfl';
-if (cloudName.toLowerCase() === 'root' || !cloudName) {
-  cloudName = 's8c3eyfl';
-}
+const cloudinaryConfigured = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME
+  && process.env.CLOUDINARY_API_KEY
+  && process.env.CLOUDINARY_API_SECRET
+);
 
-cloudinary.config({
-  cloud_name: cloudName,
-  api_key: process.env.CLOUDINARY_API_KEY || '476911859997558',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'OmsTyxGmiHp6L40YOjUOOlOEhUI'
-});
+if (cloudinaryConfigured) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
 
 async function startServer() {
   const app = express();
@@ -42,8 +63,28 @@ async function startServer() {
     });
   });
 
+  app.post('/api/cv/parse', createRequireCandidate(), createCVParseHandler());
+  app.get('/api/cv/current', createRequireCandidate(), createCurrentCVHandler());
+  app.post('/api/interviews', createRequireCandidate(), createInterviewStartHandler());
+  app.get('/api/interviews', createRequireCandidate(), createInterviewHistoryHandler());
+  app.get('/api/interviews/:sessionId', createRequireCandidate(), createInterviewGetHandler());
+  app.post('/api/interviews/:sessionId/answers', createRequireCandidate(), createInterviewAnswerHandler());
+  app.post('/api/interviews/:sessionId/cancel', createRequireCandidate(), createInterviewCancelHandler());
+  app.get('/api/interviews/:sessionId/report', createRequireCandidate(), createInterviewReportHandler());
+  app.get('/api/jobs/open', createRequireCandidate(), createCandidateOpenJobsHandler());
+  app.post('/api/jobs', createRequireRecruiter(), createJobCreateHandler());
+  app.get('/api/jobs/mine', createRequireRecruiter(), createMyJobsHandler());
+  app.delete('/api/jobs/:jobId', createRequireRecruiter(), createJobDeleteHandler());
+  app.post('/api/jobs/:jobId/match', createRequireRecruiter(), createJobMatchingHandler());
+  app.post('/api/admin/users', createRequireAdmin(), createAdminUserCreateHandler());
+  app.put('/api/admin/users/:uid', createRequireAdmin(), createAdminUserUpdateHandler());
+  app.delete('/api/admin/users/:uid', createRequireAdmin(), createAdminUserDeleteHandler());
+
   // API: Cloudinary Image Upload
   app.post('/api/cloudinary/upload', async (req, res) => {
+    if (!cloudinaryConfigured) {
+      return res.status(503).json({ error: 'Le service de stockage d\'images n\'est pas configuré.' });
+    }
     const { file, path: folderPath } = req.body;
 
     if (!file) {
@@ -74,11 +115,9 @@ async function startServer() {
 
   // API: Register User
   app.post('/api/auth/register', async (req, res) => {
-    const { email, password, firstName, lastName, role } = req.body;
-
-    if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ error: 'Champs requis manquants' });
-    }
+    const parsed = publicRegistrationSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: { code: 'REGISTRATION_VALIDATION_FAILED', message: 'Les informations d’inscription sont invalides.', details: [] } });
+    const { email, password, firstName, lastName, role } = parsed.data;
 
     try {
       if (adminApp) {
@@ -139,72 +178,6 @@ async function startServer() {
     }
   });
 
-  // API: Delete User (Admin action)
-  app.delete('/api/admin/users/:uid', async (req, res) => {
-    const { uid } = req.params;
-    try {
-      if (adminApp) {
-        const authAdmin = getAuth(adminApp);
-        const dbAdmin = getFirestore(adminApp);
-
-        // Delete from Auth if exists
-        try {
-          await authAdmin.deleteUser(uid);
-        } catch (err: any) {
-          console.warn(`User ${uid} not found in Auth or already deleted:`, err.message);
-        }
-
-        // Delete Firestore document
-        await dbAdmin.collection('users').doc(uid).delete();
-      }
-      return res.json({ success: true, message: 'Utilisateur supprimé avec succès' });
-    } catch (error: any) {
-      console.error('API delete user error:', error);
-      return res.status(500).json({ error: error.message || 'Erreur lors de la suppression' });
-    }
-  });
-
-  // API: Update User Profile (Admin action)
-  app.put('/api/admin/users/:uid', async (req, res) => {
-    const { uid } = req.params;
-    const { firstName, lastName, email, role, subscription, isActive } = req.body;
-    try {
-      if (adminApp) {
-        const authAdmin = getAuth(adminApp);
-        const dbAdmin = getFirestore(adminApp);
-
-        // Update in Auth if email/name changes
-        try {
-          const updateData: any = {};
-          if (email) updateData.email = email;
-          if (firstName || lastName) updateData.displayName = `${firstName || ''} ${lastName || ''}`.trim();
-          if (Object.keys(updateData).length > 0) {
-            await authAdmin.updateUser(uid, updateData);
-          }
-        } catch (err: any) {
-          console.warn(`Could not update Auth user ${uid}:`, err.message);
-        }
-
-        // Update Firestore profile
-        const docRef = dbAdmin.collection('users').doc(uid);
-        const updateFields: any = {};
-        if (firstName !== undefined) updateFields.firstName = firstName;
-        if (lastName !== undefined) updateFields.lastName = lastName;
-        if (email !== undefined) updateFields.email = email;
-        if (role !== undefined) updateFields.role = role;
-        if (subscription !== undefined) updateFields.subscription = subscription;
-        if (isActive !== undefined) updateFields.isActive = isActive;
-        updateFields.updatedAt = new Date().toISOString();
-
-        await docRef.update(updateFields);
-      }
-      return res.json({ success: true, message: 'Utilisateur mis à jour avec succès' });
-    } catch (error: any) {
-      console.error('API update user error:', error);
-      return res.status(500).json({ error: error.message || 'Erreur lors de la mise à jour' });
-    }
-  });
-
   // API: Login mock/proxy
   app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
@@ -225,17 +198,20 @@ async function startServer() {
   });
 
   // API: Gemini LLM Job Creation Assistant
-  app.post('/api/jobs/ai-generate', async (req, res) => {
-    const { prompt, conversationHistory } = req.body;
+  app.post('/api/jobs/ai-generate', createRequireRecruiter(), async (req: any, res) => {
+    if (req.recruiter?.subscription !== 'PREMIUM') {
+      return res.status(403).json({ error: { code: 'PREMIUM_REQUIRED', message: 'A Premium recruiter subscription is required.', details: [] } });
+    }
+    const { prompt, conversationHistory } = req.body ?? {};
 
-    if (!prompt && (!conversationHistory || conversationHistory.length === 0)) {
-      return res.status(400).json({ error: 'Un message ou un historique de conversation est requis.' });
+    if (typeof prompt !== 'string' || !prompt.trim() || (conversationHistory !== undefined && !Array.isArray(conversationHistory))) {
+      return res.status(400).json({ error: { code: 'AI_REQUEST_INVALID', message: 'A valid recruiter message is required.', details: [] } });
     }
 
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return res.status(500).json({ error: 'La clé API GEMINI_API_KEY n\'est pas configurée.' });
+        return res.status(503).json({ error: { code: 'AI_UNAVAILABLE', message: 'The AI assistant is temporarily unavailable.', details: [] } });
       }
 
       const ai = new GoogleGenAI({
@@ -318,23 +294,16 @@ Reste courtois, précis, et aide le recruteur à affiner sa recherche. Réponds 
       const responseText = response.text || '';
 
       // Extract JSON block
-      let extractedJson = null;
-      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
-      if (jsonMatch && jsonMatch[1]) {
-        try {
-          extractedJson = JSON.parse(jsonMatch[1]);
-        } catch (e) {
-          console.warn('[Gemini Job AI] Failed to parse extracted JSON:', e);
-        }
-      }
+      const extracted = extractValidatedGeminiDraft(responseText);
 
       return res.json({
         reply: responseText,
-        extractedJson
+        extractedJson: extracted.draft,
+        extractedJsonError: extracted.invalid,
       });
     } catch (error: any) {
-      console.error('[Gemini Job AI] Error generating job content:', error);
-      return res.status(500).json({ error: error.message || 'Erreur lors de la communication avec Gemini LLM' });
+      console.error('[Gemini Job AI] generation failed', { errorName: error instanceof Error ? error.name : 'unknown' });
+      return res.status(502).json({ error: { code: 'AI_GENERATION_FAILED', message: 'The AI assistant could not generate a response.', details: [] } });
     }
   });
 

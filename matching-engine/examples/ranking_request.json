@@ -1,0 +1,21 @@
+{
+  "job": {
+    "job_id": "job-001",
+    "job_title": "Backend Developer",
+    "required_skills": ["Python", "FastAPI", "PostgreSQL"],
+    "preferred_skills": ["Docker", "AWS"],
+    "minimum_experience_years": 3,
+    "required_languages": [{"name": "French", "minimum_level": "fluent", "mandatory": true}],
+    "location": "Casablanca",
+    "work_mode": "hybrid",
+    "contract_type": "CDI"
+  },
+  "candidates": [
+    {"candidate_id": "candidate-047", "full_name": "Samira Example", "skills": ["Python", "FastAPI", "PostgreSQL", "Docker"], "total_experience_years": 4, "languages": [{"name": "French", "level": "native"}], "location": "Casablanca", "preferred_work_mode": "hybrid", "preferred_contract_types": ["CDI"]},
+    {"candidate_id": "candidate-012", "full_name": "Youssef Example", "skills": ["Python", "Postgres", "Docker"], "total_experience_years": 3, "languages": [{"name": "Français", "level": "fluent"}], "location": "Casablanca", "preferred_work_mode": "hybrid", "preferred_contract_types": ["permanent"]},
+    {"candidate_id": "candidate-103", "full_name": "Nora Example", "skills": ["Python", "FastAPI", "PostgreSQL", "AWS"], "total_experience_years": 2, "languages": [{"name": "French", "level": "advanced"}], "preferred_work_mode": "remote"},
+    {"candidate_id": "candidate-088", "full_name": "Omar Example", "skills": ["Python", "PostgreSQL"], "total_experience_years": 5, "languages": [{"name": "French", "level": "fluent"}], "location": "Rabat", "preferred_work_mode": "onsite", "preferred_contract_types": ["CDD"]},
+    {"candidate_id": "candidate-025", "full_name": "Leila Example", "skills": ["Python", "FastAPI"], "total_experience_years": 3, "languages": [{"name": "French", "level": "fluent"}], "location": "Casablanca", "preferred_work_mode": "hybrid", "preferred_contract_types": ["CDI"]}
+  ],
+  "options": {"top_k": 3, "include_technical_details": false, "invalid_candidate_policy": "skip"}
+}

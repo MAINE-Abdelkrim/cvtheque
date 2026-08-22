@@ -1,0 +1,91 @@
+{
+  "identity": {
+    "full_name": "Mehdi Rami",
+    "email": "mehdi.rami@example.com",
+    "phone": "+212 600 000 606",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "Agadir, Maroc",
+    "job_title": "Cloud Engineer",
+    "other_links": []
+  },
+  "summary": "Cloud engineer spécialisé dans l'infrastructure reproductible, l'observabilité et la fiabilité.",
+  "skills": [
+    {
+      "name": "AWS"
+    },
+    {
+      "name": "Docker"
+    },
+    {
+      "name": "Kubernetes"
+    },
+    {
+      "name": "Terraform"
+    },
+    {
+      "name": "Linux"
+    },
+    {
+      "name": "Python"
+    }
+  ],
+  "languages": [
+    {
+      "language": "Arabic",
+      "level": "Native",
+      "original_level": "Maternelle"
+    },
+    {
+      "language": "French",
+      "level": "Professional",
+      "original_level": "Professionnel"
+    },
+    {
+      "language": "English",
+      "level": "Fluent",
+      "original_level": "Courant"
+    },
+    {
+      "language": "German",
+      "level": "Basic",
+      "original_level": "Notions"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect",
+      "issuer": "AWS",
+      "date": "2024",
+      "credential_id": null
+    },
+    {
+      "name": "Terraform Associate",
+      "issuer": "HashiCorp",
+      "date": "2024",
+      "credential_id": null
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master",
+      "field_of_study": "Cloud Computing",
+      "institution": "Université des Systèmes Ouverts",
+      "location": "Agadir",
+      "start_date": "2022",
+      "end_date": "2024",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Cloud Engineer",
+      "company": "Nimbus Harbor",
+      "location": "Agadir",
+      "start_date": "2025-02",
+      "end_date": "2025-07",
+      "description": "Industrialisation d'environnements AWS avec Terraform et Kubernetes."
+    }
+  ]
+}

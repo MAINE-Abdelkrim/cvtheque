@@ -1,0 +1,33 @@
+{
+  "identity": {
+    "full_name": "Candidate Name",
+    "location": "Casablanca",
+    "job_title": "Backend Developer"
+  },
+  "summary": "Backend developer with 3 years of experience.",
+  "skills": [
+    {"name": "Python", "category": "Programming", "source": "skills"},
+    {"name": "FastAPI", "category": "Framework", "source": "skills"}
+  ],
+  "experiences": [
+    {
+      "job_title": "Backend Developer",
+      "company": "ABC Tech",
+      "location": "Casablanca",
+      "start_date": "2022",
+      "end_date": "2025",
+      "description": "Developed REST APIs using FastAPI and PostgreSQL."
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master",
+      "field_of_study": "Computer Science",
+      "institution": "University",
+      "end_date": "2022"
+    }
+  ],
+  "languages": [{"language": "French", "level": "fluent"}],
+  "certifications": []
+}
+

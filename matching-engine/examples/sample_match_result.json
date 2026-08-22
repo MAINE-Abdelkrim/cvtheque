@@ -1,0 +1,26 @@
+{
+  "matching_version": "1.0.0",
+  "candidate_id": "candidate-123",
+  "job_id": "job-456",
+  "overall_score": 97.5,
+  "classification": "excellent_match",
+  "eligible": true,
+  "hard_requirement_failures": [],
+  "scores": {
+    "required_skills": {"score": 100.0, "weight": 40.0, "weighted_score": 40.0, "active": true, "matched": ["Python", "FastAPI", "PostgreSQL"], "missing": [], "partial_matches": [], "explanation": "3 of 3 required skills matched.", "warnings": [], "details": {}},
+    "experience": {"score": 100.0, "weight": 25.0, "weighted_score": 25.0, "active": true, "matched": [], "missing": [], "partial_matches": [], "explanation": "Candidate experience is 3 years; 3 years were required.", "warnings": [], "details": {"candidate_years": 3.0, "required_years": 3.0}},
+    "education": {"score": 100.0, "weight": 10.0, "weighted_score": 10.0, "active": true, "matched": ["computer science"], "missing": [], "partial_matches": [], "explanation": "Candidate education level 4 was compared with required level 4.", "warnings": [], "details": {"candidate_level": 4, "required_level": 4, "field_matched": true}},
+    "languages": {"score": 100.0, "weight": 10.0, "weighted_score": 10.0, "active": true, "matched": ["French", "English"], "missing": [], "partial_matches": [], "explanation": "2 of 2 language requirements were fully satisfied.", "warnings": [], "details": {"candidate_levels": {"french": 5, "english": 3}}},
+    "preferred_skills": {"score": 50.0, "weight": 5.0, "weighted_score": 2.5, "active": true, "matched": ["Docker"], "missing": ["AWS"], "partial_matches": [], "explanation": "1 of 2 preferred skills matched.", "warnings": [], "details": {}},
+    "location_and_work_mode": {"score": 100.0, "weight": 5.0, "weighted_score": 5.0, "active": true, "matched": ["Casablanca", "hybrid"], "missing": [], "partial_matches": [], "explanation": "Location match: true; work-mode match: true.", "warnings": [], "details": {"location_match": true, "work_mode_match": true, "remote_allowed": true}},
+    "contract_type": {"score": 100.0, "weight": 5.0, "weighted_score": 5.0, "active": true, "matched": ["CDI"], "missing": [], "partial_matches": [], "explanation": "Contract preference matched 'CDI'.", "warnings": [], "details": {}}
+  },
+  "matched_skills": ["Python", "FastAPI", "PostgreSQL", "Docker"],
+  "missing_required_skills": [],
+  "missing_preferred_skills": ["AWS"],
+  "strengths": ["Required skills requirement is fully satisfied."],
+  "gaps": ["AWS was preferred but was not found."],
+  "warnings": [],
+  "explanation": "Deterministic criterion explanations are returned here.",
+  "metadata": {"scoring_profile": "default-v1", "cv_schema_version": "1.0", "job_schema_version": "1.0", "weights_redistributed": false, "processed_at": "2026-01-01T00:00:00Z"}
+}

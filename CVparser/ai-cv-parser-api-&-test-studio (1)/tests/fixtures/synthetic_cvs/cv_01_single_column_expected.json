@@ -1,0 +1,72 @@
+{
+  "identity": {
+    "full_name": "Sara El Mansouri",
+    "email": "sara.elmansouri@example.com",
+    "phone": "+212 600 000 101",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "Rabat, Maroc",
+    "job_title": "Data Analyst",
+    "other_links": []
+  },
+  "summary": "Data analyst spécialisée dans la transformation de données métier en tableaux de bord clairs.",
+  "skills": [
+    {
+      "name": "Python"
+    },
+    {
+      "name": "SQL"
+    },
+    {
+      "name": "Power BI"
+    },
+    {
+      "name": "Pandas"
+    },
+    {
+      "name": "Excel"
+    }
+  ],
+  "languages": [
+    {
+      "language": "French",
+      "level": "Fluent",
+      "original_level": "Courant"
+    },
+    {
+      "language": "English",
+      "level": "Intermediate",
+      "original_level": "Intermédiaire"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Microsoft Power BI Data Analyst",
+      "issuer": "Microsoft",
+      "date": "2024",
+      "credential_id": null
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master",
+      "field_of_study": "Data Science",
+      "institution": "Université Horizon",
+      "location": "Rabat",
+      "start_date": "2020",
+      "end_date": "2022",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Data Analyst",
+      "company": "Atlas Metrics",
+      "location": "Rabat",
+      "start_date": "2022",
+      "end_date": "2024",
+      "description": "Création de tableaux de bord et automatisation des contrôles de qualité."
+    }
+  ]
+}

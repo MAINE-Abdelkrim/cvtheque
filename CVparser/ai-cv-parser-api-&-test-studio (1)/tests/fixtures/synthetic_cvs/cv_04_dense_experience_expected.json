@@ -1,0 +1,89 @@
+{
+  "identity": {
+    "full_name": "Omar Alaoui",
+    "email": "omar.alaoui@example.com",
+    "phone": "+212 600 000 404",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "Tanger, Maroc",
+    "job_title": "Software Engineer",
+    "other_links": []
+  },
+  "summary": "Ingénieur logiciel expérimenté dans la livraison de plateformes web maintenables.",
+  "skills": [
+    {
+      "name": "Java"
+    },
+    {
+      "name": "Spring Boot"
+    },
+    {
+      "name": "React"
+    },
+    {
+      "name": "MySQL"
+    },
+    {
+      "name": "Docker"
+    },
+    {
+      "name": "Git"
+    }
+  ],
+  "languages": [
+    {
+      "language": "Arabic",
+      "level": "Native",
+      "original_level": "Maternelle"
+    },
+    {
+      "language": "French",
+      "level": "Fluent",
+      "original_level": "Courant"
+    },
+    {
+      "language": "English",
+      "level": "Professional",
+      "original_level": "B2"
+    }
+  ],
+  "certifications": [],
+  "education": [
+    {
+      "degree": "Engineering Degree",
+      "field_of_study": "Software Engineering",
+      "institution": "Nova Engineering School",
+      "location": "Tanger",
+      "start_date": "2016",
+      "end_date": "2020",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Software Engineer",
+      "company": "Blue Cedar Systems",
+      "location": "Tanger",
+      "start_date": "2023",
+      "end_date": "Présent",
+      "description": "Conception de services Spring Boot et revues de code pour une plateforme métier."
+    },
+    {
+      "job_title": "Java Developer",
+      "company": "Orion Stack",
+      "location": "Rabat",
+      "start_date": "2021",
+      "end_date": "2023",
+      "description": "Développement de modules Java et migration progressive des interfaces React."
+    },
+    {
+      "job_title": "Software Engineer Intern",
+      "company": "Delta Forge",
+      "location": "Casablanca",
+      "start_date": "2020",
+      "end_date": "2021",
+      "description": "Automatisation de tests et documentation des flux de déploiement."
+    }
+  ]
+}

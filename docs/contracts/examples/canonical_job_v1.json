@@ -1,0 +1,22 @@
+{
+  "id": "job-synthetic-001",
+  "recruiterId": "recruiter-synthetic-001",
+  "title": "Backend Developer",
+  "company": "Example Labs",
+  "location": "Casablanca",
+  "description": "Build and maintain documented backend services.",
+  "required_skills": ["Python", "FastAPI"],
+  "preferred_skills": ["Docker"],
+  "minimum_experience_years": 2,
+  "maximum_experience_years": 5,
+  "required_education": {"minimum_level": "Master", "preferred_fields": ["Computer Science"], "mandatory": true},
+  "required_languages": [{"name": "French", "minimum_level": "fluent", "mandatory": true}],
+  "remote_allowed": true,
+  "work_mode": "hybrid",
+  "contract_type": "CDI",
+  "mandatory_requirements": ["Availability during core collaboration hours"],
+  "status": "OPEN",
+  "schemaVersion": 1,
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}

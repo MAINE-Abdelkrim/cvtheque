@@ -53,8 +53,8 @@ export interface JobPosting {
   required_education?: EducationRequirement;
   required_languages?: LanguageRequirement[];
   remote_allowed?: boolean;
-  work_mode?: 'onsite' | 'hybrid' | 'remote';
-  contract_type?: 'CDI' | 'CDD' | 'Freelance' | 'Stage' | 'Alternance';
+  work_mode?: 'onsite' | 'hybrid' | 'remote' | null;
+  contract_type?: 'CDI' | 'CDD' | 'Freelance' | 'Stage' | 'Alternance' | null;
   mandatory_requirements?: string[];
   scoring_weights?: {
     skills_weight?: number;
@@ -64,4 +64,8 @@ export interface JobPosting {
   } | null;
   status: 'OPEN' | 'CLOSED';
   createdAt: string;
+  updatedAt?: string;
+  schemaVersion?: number;
 }
+
+export type { CanonicalJob, CanonicalJobInput, GeminiJobDraft } from './job';

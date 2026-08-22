@@ -23,28 +23,75 @@ service cloud.firestore {
       return hasRole('RECRUITER');
     }
 
+    function isCanonicalCV(data) {
+      return data.keys().hasAll(['parsedData', 'parsing', 'isCurrent'])
+        && data.parsing.keys().hasAll(['schemaVersion']);
+    }
+
+    function isCanonicalJob(data) {
+      return data.keys().hasAll(['schemaVersion']) && data.schemaVersion == 1;
+    }
+
     // Users Collection
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.role in ['CANDIDATE', 'RECRUITER']
+        && request.resource.data.subscription == 'FREE'
+        && request.resource.data.isActive == true;
+      allow update: if isAdmin() || (isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.subscription == resource.data.subscription
+        && request.resource.data.isActive == resource.data.isActive);
       allow delete: if isAdmin();
     }
 
     // CVs Collection
     match /cvs/{cvId} {
-      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isRecruiter() || isAdmin());
-      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      // Canonical CVs contain private structured data. Candidates may read their
+      // own records; Admin SDK server operations bypass these client rules.
+      allow read: if isAuthenticated() && (
+        resource.data.uid == request.auth.uid
+        || isAdmin()
+        || (isRecruiter() && !isCanonicalCV(resource.data))
+      );
+
+      // Preserve the legacy simulator temporarily, but canonical documents can
+      // only be created or changed by the authenticated Express backend.
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && !isCanonicalCV(request.resource.data);
+      allow update: if isAuthenticated() && (
+        isAdmin()
+        || (resource.data.uid == request.auth.uid
+          && !isCanonicalCV(resource.data)
+          && !isCanonicalCV(request.resource.data))
+      );
+      allow delete: if isAuthenticated() && (
+        isAdmin()
+        || (resource.data.uid == request.auth.uid && !isCanonicalCV(resource.data))
+      );
     }
 
     // Jobs Collection
     match /jobs/{jobId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && (isRecruiter() || isAdmin());
-      allow update: if isAuthenticated() && (isRecruiter() || isAdmin());
-      allow delete: if isAuthenticated() && (isRecruiter() || isAdmin());
+      allow read: if isAuthenticated() && (resource.data.status == 'OPEN' || isRecruiter() || isAdmin());
+
+      // Canonical jobs are written by Firebase Admin through Express. Keep only
+      // owner-scoped legacy writes temporarily for the simulator.
+      allow create: if isAuthenticated()
+        && !isCanonicalJob(request.resource.data)
+        && (isAdmin() || (isRecruiter() && request.resource.data.recruiterId == request.auth.uid));
+      allow update: if isAuthenticated() && !isCanonicalJob(resource.data)
+        && !isCanonicalJob(request.resource.data)
+        && (isAdmin() || (isRecruiter() && resource.data.recruiterId == request.auth.uid
+          && request.resource.data.recruiterId == request.auth.uid));
+      allow delete: if isAuthenticated() && !isCanonicalJob(resource.data)
+        && (isAdmin() || (isRecruiter() && resource.data.recruiterId == request.auth.uid));
     }
   }
 }

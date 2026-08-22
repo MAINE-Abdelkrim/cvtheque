@@ -1,0 +1,59 @@
+{
+  "identity": {
+    "full_name": "Salma Nouri",
+    "email": "salma.nouri@example.com",
+    "phone": "+212 600 000 808",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "Tanger, Maroc",
+    "job_title": "Process Engineer",
+    "other_links": []
+  },
+  "summary": "Ingénieure procédés attentive à la qualité, aux flux opérationnels et à l'amélioration continue.",
+  "skills": [
+    {
+      "name": "Process Mapping"
+    },
+    {
+      "name": "Lean Manufacturing"
+    },
+    {
+      "name": "Excel"
+    }
+  ],
+  "languages": [
+    {
+      "language": "French",
+      "level": "Fluent",
+      "original_level": "Courant"
+    },
+    {
+      "language": "Arabic",
+      "level": "Native",
+      "original_level": "Maternelle"
+    }
+  ],
+  "certifications": [],
+  "education": [
+    {
+      "degree": "Master",
+      "field_of_study": "Génie industriel",
+      "institution": "Institut Technique Horizon",
+      "location": "Tanger",
+      "start_date": "2021",
+      "end_date": "2023",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Process Engineer",
+      "company": "Fictional Flow Works",
+      "location": "Tanger",
+      "start_date": "2023",
+      "end_date": "Présent",
+      "description": "Analyse des flux et animation des actions d'amélioration."
+    }
+  ]
+}

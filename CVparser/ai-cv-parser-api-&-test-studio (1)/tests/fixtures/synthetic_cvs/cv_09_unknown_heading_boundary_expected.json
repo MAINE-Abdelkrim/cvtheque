@@ -1,0 +1,42 @@
+{
+  "identity": {
+    "full_name": "Elias Morel",
+    "email": "elias.morel@example.com",
+    "phone": "+33 600 000 909",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "Paris, France",
+    "job_title": "Platform Engineer",
+    "other_links": []
+  },
+  "summary": null,
+  "skills": [
+    {
+      "name": "Python"
+    },
+    {
+      "name": "Docker"
+    }
+  ],
+  "languages": [
+    {
+      "language": "French",
+      "level": "Native",
+      "original_level": "Native"
+    }
+  ],
+  "certifications": [],
+  "education": [
+    {
+      "degree": "Master",
+      "field_of_study": "Computer Science",
+      "institution": "Northbridge Institute",
+      "location": "Paris",
+      "start_date": "2020",
+      "end_date": "2022",
+      "description": null
+    }
+  ],
+  "experiences": []
+}

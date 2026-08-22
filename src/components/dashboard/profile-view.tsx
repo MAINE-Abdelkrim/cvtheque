@@ -1,229 +1,66 @@
-import React, { useState, useRef } from 'react';
-import { useAuth } from '../../providers/auth-provider';
-import { dbEngine } from '../../lib/firebase/db';
-import { RoleBadge } from '../ui/role-badge';
-import { User, Mail, CreditCard, Sparkles, Shield, KeyRound, Check, HelpCircle, Camera, Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Camera, Loader2, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { buildSelfProfileUpdate, getAuthErrorMessage } from '../../lib/auth/ux';
+import { dbEngine } from '../../lib/firebase/db';
 import { storageService } from '../../lib/storage-service';
+import { useAuth } from '../../providers/auth-provider';
+import { Badge, StatusBadge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader } from '../ui/card';
+import { FormField, Input } from '../ui/form-controls';
+import { PageHeader } from '../ui/page-header';
+import { RoleBadge } from '../ui/role-badge';
 
 export const ProfileView: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
-  const [firstName, setFirstName] = useState(profile?.firstName || '');
-  const [lastName, setLastName] = useState(profile?.lastName || '');
-  const [photoURL, setPhotoURL] = useState(profile?.photoURL || '');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
   const [saving, setSaving] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string>();
+  const avatarRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (profile) { setFirstName(profile.firstName); setLastName(profile.lastName); setPhotoURL(profile.photoURL ?? ''); } }, [profile]);
+  if (!profile) return <div role="alert" className="text-sm text-[var(--danger)]">Votre profil est indisponible.</div>;
+  const initials = `${profile.firstName.at(0) ?? ''}${profile.lastName.at(0) ?? ''}`.toUpperCase();
 
-  if (!profile) return null;
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setUploadingAvatar(true);
-      try {
-        const path = `users/${profile.uid}/avatars/${Date.now()}_${file.name}`;
-        const uploadedUrl = await storageService.uploadFile(file, path);
-        setPhotoURL(uploadedUrl);
-        toast.success('Nouvelle image chargée ! Cliquez sur Enregistrer pour valider.');
-      } catch (err: any) {
-        toast.error(err.message || 'Erreur d\'upload de l\'image de profil.');
-      } finally {
-        setUploadingAvatar(false);
-      }
-    }
+  const avatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; if (!file) return;
+    if (!file.type.startsWith('image/')) { setError('Sélectionnez un fichier image valide.'); return; }
+    setUploading(true); setError(undefined);
+    try { setPhotoURL(await storageService.uploadFile(file, `users/${profile.uid}/avatars/${Date.now()}_${file.name}`)); toast.success('Photo chargée. Enregistrez pour confirmer.'); }
+    catch (cause) { setError(getAuthErrorMessage(cause, 'profile')); }
+    finally { setUploading(false); event.target.value = ''; }
   };
-
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!firstName || !lastName) {
-      toast.error('Le prénom et le nom sont requis.');
-      return;
-    }
-
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault(); setError(undefined);
+    const payload = buildSelfProfileUpdate({ firstName, lastName, photoURL });
+    if (!payload.firstName || !payload.lastName) { setError('Le prénom et le nom sont requis.'); return; }
     setSaving(true);
-    try {
-      await dbEngine.updateUserProfile(profile.uid, {
-        firstName,
-        lastName,
-        photoURL: photoURL.trim() || undefined
-      });
-      await refreshProfile();
-      toast.success('Votre profil a été mis à jour avec succès.');
-    } catch (err) {
-      toast.error('Erreur lors de la mise à jour.');
-    } finally {
-      setSaving(false);
-    }
+    try { await dbEngine.updateUserProfile(profile.uid, payload); await refreshProfile(); toast.success('Profil mis à jour.'); }
+    catch (cause) { setError(getAuthErrorMessage(cause, 'profile')); }
+    finally { setSaving(false); }
   };
 
-  const handleToggleSubscription = async () => {
-    const nextTier = profile.subscription === 'FREE' ? 'PREMIUM' : 'FREE';
-    try {
-      await dbEngine.updateUserProfile(profile.uid, { subscription: nextTier });
-      await refreshProfile();
-      toast.success(`Abonnement mis à jour: ${nextTier === 'PREMIUM' ? 'Version Premium Activée !' : 'Retour au plan gratuit'}`);
-    } catch (e) {
-      toast.error('Erreur d\'abonnement.');
-    }
-  };
-
-  return (
-    <div className="space-y-8 select-none">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left column: Profile overview card (1/3 of space) */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="glass-card rounded-2xl p-6 border border-slate-800/60 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            {/* Glowing backdrop circle */}
-            <div className="absolute -left-10 -top-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative group cursor-pointer mb-4" onClick={() => avatarInputRef.current?.click()} title="Cliquez pour changer votre image">
-              <input
-                type="file"
-                ref={avatarInputRef}
-                onChange={handleAvatarChange}
-                accept="image/*"
-                className="hidden"
-              />
-              <img
-                src={photoURL || profile.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120'}
-                alt="Avatar"
-                className="w-24 h-24 rounded-2xl object-cover border-2 border-slate-800 bg-slate-900 shadow-2xl transition-all duration-300 group-hover:scale-105 group-hover:border-indigo-500/50"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                {uploadingAvatar ? (
-                  <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-                ) : (
-                  <Camera className="w-6 h-6 text-white" />
-                )}
-              </div>
-            </div>
-
-            <h3 className="text-base font-bold font-display text-white">
-              {profile.firstName} {profile.lastName}
-            </h3>
-            <p className="text-xs text-slate-500 font-mono mb-4">{profile.email}</p>
-
-            <div className="flex flex-col space-y-2 w-full mt-2">
-              <div className="flex justify-between items-center px-4 py-2 bg-slate-950 border border-slate-900 rounded-xl text-xs">
-                <span className="text-slate-500 font-medium">Type de compte</span>
-                <RoleBadge role={profile.role} />
-              </div>
-              <div className="flex justify-between items-center px-4 py-2 bg-slate-950 border border-slate-900 rounded-xl text-xs">
-                <span className="text-slate-500 font-medium">Abonnement</span>
-                <RoleBadge subscription={profile.subscription} />
-              </div>
-            </div>
-          </div>
-
-          {/* Premium promotion banner if FREE */}
-          {profile.subscription === 'FREE' ? (
-            <div className="rounded-2xl p-6 bg-gradient-to-tr from-indigo-950/80 to-pink-950/50 border border-indigo-500/20 relative overflow-hidden">
-              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-pink-500/10 rounded-full blur-xl pointer-events-none" />
-              <div className="flex items-center space-x-2 text-xs text-indigo-400 font-bold mb-2.5">
-                <Sparkles className="w-4.5 h-4.5 shrink-0" />
-                <span>Passez à la version PREMIUM</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                Débloquez le matching de CVs illimités, l'accès à la base de données candidats globale et l'évaluation d'entretiens par l'IA.
-              </p>
-              <button
-                onClick={handleToggleSubscription}
-                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors cursor-pointer"
-              >
-                Activer Premium (Gratuit pour démo)
-              </button>
-            </div>
-          ) : (
-            <div className="rounded-2xl p-6 bg-gradient-to-tr from-emerald-950/60 to-teal-950/40 border border-emerald-500/20 relative overflow-hidden">
-              <div className="flex items-center space-x-2 text-xs text-emerald-400 font-bold mb-2.5">
-                <Check className="w-4.5 h-4.5 shrink-0" />
-                <span>Premium Actif</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                Vous disposez de toutes les fonctionnalités de la plateforme CVthèque IA, y compris l'analyse sémantique cognitive illimitée.
-              </p>
-              <button
-                onClick={handleToggleSubscription}
-                className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 font-semibold text-xs transition-colors cursor-pointer"
-              >
-                Retourner au plan gratuit
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right column: Edit forms (2/3 of space) */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="glass-card rounded-2xl p-6 border border-slate-800/60">
-            <h3 className="text-sm font-bold font-display text-white border-b border-slate-900 pb-4 mb-6 flex items-center space-x-2">
-              <User className="w-4.5 h-4.5 text-indigo-400" />
-              <span>Détails du profil personnel</span>
-            </h3>
-
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-400">Prénom</label>
-                  <input
-                    type="text"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-white text-xs focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-400">Nom</label>
-                  <input
-                    type="text"
-                    required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-white text-xs focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-400">Adresse e-mail (Non modifiable)</label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-600" />
-                  <input
-                    type="email"
-                    disabled
-                    value={profile.email}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-900 bg-slate-950 text-slate-500 text-xs cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-400">URL de l'image de profil</label>
-                <input
-                  type="text"
-                  value={photoURL}
-                  onChange={(e) => setPhotoURL(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-white text-xs focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-xs transition-colors cursor-pointer"
-                >
-                  {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+  return <div className="mx-auto max-w-5xl space-y-6">
+    <PageHeader title="Mon profil" description="Gérez vos informations personnelles et consultez les paramètres de votre compte." />
+    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <Card><CardContent className="text-center">
+        <div className="relative mx-auto mb-4 h-24 w-24 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)]">{photoURL ? <img src={photoURL} alt="Photo de profil" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <span className="flex h-full items-center justify-center text-xl font-semibold text-[var(--primary)]">{initials || <User className="h-6 w-6" />}</span>}<button type="button" onClick={() => avatarRef.current?.click()} disabled={uploading} className="absolute inset-x-0 bottom-0 flex min-h-9 items-center justify-center bg-black/65 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]" aria-label="Changer la photo de profil">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}</button></div>
+        <input ref={avatarRef} type="file" accept="image/*" className="sr-only" onChange={avatar} />
+        <p className="font-semibold text-[var(--foreground)]">{profile.firstName} {profile.lastName}</p><p className="mt-1 break-all text-sm text-[var(--muted-foreground)]">{profile.email}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><RoleBadge role={profile.role} /><Badge>{profile.subscription === 'PREMIUM' ? 'Premium' : 'Gratuit'}</Badge><StatusBadge status={profile.isActive ? 'Actif' : 'Inactif'} /></div>
+      </CardContent></Card>
+      <div className="space-y-6">
+        <Card><CardHeader><h2 className="text-base font-semibold text-[var(--foreground)]">Informations personnelles</h2><p className="mt-1 text-sm text-[var(--muted-foreground)]">Ces informations peuvent être modifiées.</p></CardHeader><CardContent><form onSubmit={save} className="space-y-5" aria-busy={saving || uploading}>
+          {error && <div role="alert" className="rounded-[10px] border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--danger)]">{error}</div>}
+          <div className="grid gap-4 sm:grid-cols-2"><FormField label="Prénom" htmlFor="profile-first-name" required><Input id="profile-first-name" autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} /></FormField><FormField label="Nom" htmlFor="profile-last-name" required><Input id="profile-last-name" autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} /></FormField></div>
+          <Button type="submit" disabled={saving || uploading}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Enregistrer les modifications</Button>
+        </form></CardContent></Card>
+        <Card><CardHeader><h2 className="text-base font-semibold text-[var(--foreground)]">Informations du compte</h2><p className="mt-1 text-sm text-[var(--muted-foreground)]">Ces données sont gérées par la plateforme et ne sont pas modifiables ici.</p></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><ReadOnly label="Adresse e-mail" value={profile.email} /><ReadOnly label="Rôle" value={profile.role === 'CANDIDATE' ? 'Candidat' : profile.role === 'RECRUITER' ? 'Recruteur' : 'Administrateur'} /><ReadOnly label="Abonnement" value={profile.subscription === 'PREMIUM' ? 'Premium' : 'Gratuit'} /><ReadOnly label="Statut" value={profile.isActive ? 'Actif' : 'Inactif'} /></CardContent></Card>
       </div>
     </div>
-  );
+  </div>;
 };
+
+const ReadOnly: React.FC<{ label: string; value: string }> = ({ label, value }) => <div><dt className="text-xs font-medium text-[var(--muted-foreground)]">{label}</dt><dd className="mt-1 text-sm font-medium text-[var(--foreground)]">{value}</dd></div>;

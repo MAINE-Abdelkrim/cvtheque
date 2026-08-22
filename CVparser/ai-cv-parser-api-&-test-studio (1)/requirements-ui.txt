@@ -1,0 +1,3 @@
+# Optional Gradio Test Studio
+gradio>=4.20.0,<4.40.0
+huggingface-hub>=0.23.0,<0.25.0

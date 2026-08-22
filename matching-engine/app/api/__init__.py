@@ -1,0 +1,2 @@
+"""Optional HTTP adapter."""
+

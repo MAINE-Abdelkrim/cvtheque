@@ -1,0 +1,14 @@
+# Core Web Framework
+fastapi>=0.110.0,<0.140.0
+uvicorn[standard]>=0.17.0,<0.31.0
+pydantic>=2.6.0,<2.14.0
+pydantic-settings>=2.2.0,<2.15.0
+python-multipart>=0.0.9
+
+# Document Processing & OCR
+PyMuPDF>=1.23.22,<1.29.0
+pytesseract>=0.3.10
+Pillow>=9.4.0,<10.5.0
+
+# Environment Configuration
+python-dotenv>=0.21.0,<1.1.0

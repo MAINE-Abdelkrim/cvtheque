@@ -1,0 +1,8 @@
+{
+  "unknown": 0,
+  "high school": 1, "baccalaureate": 1, "bac": 1,
+  "bac+2": 2, "bts": 2, "dut": 2, "associate degree": 2,
+  "bac+3": 3, "licence": 3, "bachelor": 3,
+  "bac+5": 4, "master": 4, "engineering degree": 4, "diplome d ingenieur": 4,
+  "bac+8": 5, "doctorate": 5, "phd": 5
+}

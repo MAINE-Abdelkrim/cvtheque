@@ -395,6 +395,7 @@ export const dbEngine = {
   // --- JOB ACTIONS ---
 
   async createJob(job: Omit<JobPosting, 'id' | 'createdAt'>): Promise<JobPosting> {
+    // Legacy/simulation-only path. Canonical jobs use the authenticated Express API.
     const newJob: JobPosting = {
       ...job,
       id: 'job-' + Math.random().toString(36).substring(2, 9),
@@ -433,6 +434,24 @@ export const dbEngine = {
       initLocalStorageMock();
       return JSON.parse(localStorage.getItem('cv_mock_jobs') || '[]');
     }
+  },
+
+  async getOpenJobs(): Promise<JobPosting[]> {
+    if (isFirebaseConfigured && clientDb) {
+      const q = query(collection(clientDb, 'jobs'), where('status', '==', 'OPEN'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(document => {
+        const data = document.data();
+        return {
+          ...data,
+          id: document.id,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt
+        } as JobPosting;
+      });
+    }
+    initLocalStorageMock();
+    return (JSON.parse(localStorage.getItem('cv_mock_jobs') || '[]') as JobPosting[])
+      .filter(job => job.status === 'OPEN');
   },
 
   async deleteJob(id: string): Promise<void> {

@@ -1,0 +1,8 @@
+{
+  "job_id": "job-456", "job_title": "Backend Developer",
+  "required_skills": ["Python", "FastAPI", "PostgreSQL"],
+  "preferred_skills": ["Docker", "AWS"], "minimum_experience_years": 3,
+  "required_education": {"minimum_level": "Master", "preferred_fields": ["Computer Science", "Software Engineering"], "mandatory": false},
+  "required_languages": [{"name": "French", "minimum_level": "fluent", "mandatory": true}, {"name": "English", "minimum_level": "intermediate"}],
+  "location": "Casablanca", "remote_allowed": true, "work_mode": "hybrid", "contract_type": "CDI"
+}

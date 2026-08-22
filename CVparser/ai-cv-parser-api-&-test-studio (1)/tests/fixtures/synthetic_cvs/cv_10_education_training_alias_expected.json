@@ -1,0 +1,42 @@
+{
+  "identity": {
+    "full_name": "Clara Bennett",
+    "email": "clara.bennett@example.com",
+    "phone": "+212 600 000 010",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "London, United Kingdom",
+    "job_title": "Quality Analyst",
+    "other_links": []
+  },
+  "summary": "Quality analyst focused on reliable processes and measurable service improvements.",
+  "skills": [
+    {
+      "name": "Excel"
+    },
+    {
+      "name": "Process Mapping"
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native",
+      "original_level": "Native"
+    }
+  ],
+  "certifications": [],
+  "education": [
+    {
+      "degree": "Bachelor",
+      "field_of_study": "Business Analytics",
+      "institution": "Westford College",
+      "location": "London",
+      "start_date": "2018",
+      "end_date": "2021",
+      "description": null
+    }
+  ],
+  "experiences": []
+}

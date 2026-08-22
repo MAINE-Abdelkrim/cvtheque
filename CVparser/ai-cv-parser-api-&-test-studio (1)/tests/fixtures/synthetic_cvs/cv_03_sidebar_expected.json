@@ -1,0 +1,77 @@
+{
+  "identity": {
+    "full_name": "Imane Benali",
+    "email": "imane.benali@example.com",
+    "phone": "+212 600 000 303",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "Marrakech, Maroc",
+    "job_title": "UX Designer",
+    "other_links": []
+  },
+  "summary": "UX designer centrée sur la recherche utilisateur, les parcours accessibles et les systèmes cohérents.",
+  "skills": [
+    {
+      "name": "Figma"
+    },
+    {
+      "name": "Adobe XD"
+    },
+    {
+      "name": "UX Research"
+    },
+    {
+      "name": "Prototyping"
+    },
+    {
+      "name": "Design Systems"
+    }
+  ],
+  "languages": [
+    {
+      "language": "French",
+      "level": "Fluent",
+      "original_level": "Courant"
+    },
+    {
+      "language": "English",
+      "level": "Professional",
+      "original_level": "Professionnel"
+    },
+    {
+      "language": "Spanish",
+      "level": "Basic",
+      "original_level": "Notions"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "UX Design Professional Certificate",
+      "issuer": "Coursera",
+      "date": "2023",
+      "credential_id": null
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master",
+      "field_of_study": "Design numérique",
+      "institution": "Institut Créatif Atlas",
+      "location": "Marrakech",
+      "start_date": "2019",
+      "end_date": "2021",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "UX Designer",
+      "company": "Studio Pixelia",
+      "location": "Marrakech",
+      "start_date": "2021",
+      "end_date": "2024",
+      "description": "Conduite d'entretiens utilisateurs et création de prototypes testables."
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+[
+  {"id": 1, "name": "strong backend developer", "expectation": "excellent_match"},
+  {"id": 2, "name": "missing required skill", "expectation": "required score below 100"},
+  {"id": 3, "name": "Postgres alias", "expectation": "PostgreSQL full match"},
+  {"id": 4, "name": "insufficient experience", "expectation": "proportional credit"},
+  {"id": 5, "name": "mandatory language missing", "expectation": "eligible false"},
+  {"id": 6, "name": "no education requirement", "expectation": "education inactive"},
+  {"id": 7, "name": "skills and experience only", "expectation": "weights redistributed"},
+  {"id": 8, "name": "sparse CV", "expectation": "neutral preferences"},
+  {"id": 9, "name": "custom weights", "expectation": "custom contributions"},
+  {"id": 10, "name": "high score mandatory failure", "expectation": "score retained, eligible false"}
+]
+

@@ -1,0 +1,29 @@
+{
+  "id": "cv-synthetic-001",
+  "uid": "candidate-synthetic-001",
+  "status": "PROCESSED",
+  "isCurrent": true,
+  "parsedData": {
+    "identity": {
+      "full_name": "Samira Example",
+      "email": "samira@example.test",
+      "phone": null,
+      "linkedin": null,
+      "github": null,
+      "website": null,
+      "location": "Casablanca",
+      "job_title": "Backend Developer",
+      "other_links": []
+    },
+    "summary": "Backend developer focused on reliable APIs.",
+    "skills": [{"name": "Python", "category": "programming_language", "source": "skills_section"}],
+    "languages": [{"language": "French", "level": "Fluent", "original_level": "Courant"}],
+    "certifications": [{"name": "Cloud Fundamentals", "issuer": "Example Academy", "date": "2024", "credential_id": null}],
+    "education": [{"degree": "Master", "field_of_study": "Computer Science", "institution": "Example University", "location": "Rabat", "start_date": "2020", "end_date": "2022", "description": null}],
+    "experiences": [{"job_title": "Backend Developer", "company": "Example Labs", "location": "Casablanca", "start_date": "2022-06", "end_date": "Present", "description": "Built documented API services."}]
+  },
+  "file": {"originalName": "synthetic-cv.pdf", "mimeType": "application/pdf", "sizeBytes": 1024, "sha256": "synthetic-sha256"},
+  "parsing": {"schemaVersion": 1, "parserVersion": "synthetic-parser", "mode": "deterministic", "pageCount": 1, "extractionMethod": "native_pdf", "warnings": []},
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}

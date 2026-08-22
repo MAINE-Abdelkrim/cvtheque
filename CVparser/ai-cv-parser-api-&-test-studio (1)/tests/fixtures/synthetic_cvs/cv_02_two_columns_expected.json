@@ -1,0 +1,72 @@
+{
+  "identity": {
+    "full_name": "Yassine Amrani",
+    "email": "yassine.amrani@example.com",
+    "phone": "+212 600 000 202",
+    "linkedin": null,
+    "github": null,
+    "website": null,
+    "location": "Casablanca, Maroc",
+    "job_title": "Backend Developer",
+    "other_links": []
+  },
+  "summary": "Développeur backend orienté API, qualité logicielle et services conteneurisés.",
+  "skills": [
+    {
+      "name": "Python"
+    },
+    {
+      "name": "FastAPI"
+    },
+    {
+      "name": "PostgreSQL"
+    },
+    {
+      "name": "Docker"
+    },
+    {
+      "name": "Git"
+    }
+  ],
+  "languages": [
+    {
+      "language": "Arabic",
+      "level": "Native",
+      "original_level": "Langue maternelle"
+    },
+    {
+      "language": "French",
+      "level": "Fluent",
+      "original_level": "Courant"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Docker Certified Associate",
+      "issuer": "Docker",
+      "date": "2024",
+      "credential_id": null
+    }
+  ],
+  "education": [
+    {
+      "degree": "Diplôme d'ingénieur",
+      "field_of_study": "Génie logiciel",
+      "institution": "École Nova Tech",
+      "location": "Casablanca",
+      "start_date": "2019",
+      "end_date": "2022",
+      "description": null
+    }
+  ],
+  "experiences": [
+    {
+      "job_title": "Backend Developer",
+      "company": "Northwind Labs",
+      "location": "Casablanca",
+      "start_date": "2023",
+      "end_date": "Présent",
+      "description": "Développement d'API FastAPI et optimisation de requêtes PostgreSQL."
+    }
+  ]
+}

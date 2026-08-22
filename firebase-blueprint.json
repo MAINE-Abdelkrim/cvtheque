@@ -59,7 +59,7 @@
     },
     "CV": {
       "title": "Candidate CV",
-      "description": "CV uploaded by a candidate and processed by AI",
+      "description": "Legacy simulator CV or server-owned canonical parsed CV",
       "type": "object",
       "properties": {
         "id": {
@@ -91,19 +91,48 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isCurrent": {
+          "type": "boolean"
+        },
+        "parsedData": {
+          "type": "object",
+          "description": "Canonical sanitized CVStructuredData used by future server-side matching"
+        },
+        "file": {
+          "type": "object",
+          "properties": {
+            "originalName": { "type": "string" },
+            "mimeType": { "type": "string" },
+            "sizeBytes": { "type": "number" },
+            "sha256": { "type": "string" }
+          }
+        },
+        "parsing": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": { "type": "number" },
+            "parserVersion": { "type": "string" },
+            "mode": { "type": "string", "enum": ["deterministic", "hybrid"] },
+            "pageCount": { "type": "number" },
+            "extractionMethod": { "type": "string" },
+            "warnings": { "type": "array" }
+          }
         }
       },
       "required": [
-        "id",
         "uid",
-        "fileName",
         "status",
         "createdAt"
       ]
     },
     "Job": {
       "title": "Job Posting",
-      "description": "Job descriptions posted by recruiters",
+      "description": "Legacy job or server-owned canonical matcher-ready job (schemaVersion 1)",
       "type": "object",
       "properties": {
         "id": {
@@ -134,10 +163,48 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "schemaVersion": {
+          "type": "number"
+        },
+        "required_skills": {
+          "type": "array"
+        },
+        "preferred_skills": {
+          "type": "array"
+        },
+        "minimum_experience_years": {
+          "type": "number"
+        },
+        "maximum_experience_years": {
+          "type": ["number", "null"]
+        },
+        "required_education": {
+          "type": "object"
+        },
+        "required_languages": {
+          "type": "array"
+        },
+        "remote_allowed": {
+          "type": "boolean"
+        },
+        "work_mode": {
+          "type": ["string", "null"],
+          "enum": ["onsite", "hybrid", "remote", null]
+        },
+        "contract_type": {
+          "type": ["string", "null"],
+          "enum": ["CDI", "CDD", "Freelance", "Stage", "Alternance", null]
+        },
+        "mandatory_requirements": {
+          "type": "array"
         }
       },
       "required": [
-        "id",
         "recruiterId",
         "title",
         "description",

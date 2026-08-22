@@ -1,0 +1,11 @@
+{
+  "aliases": {
+    "postgres": "postgresql", "postgresql database": "postgresql",
+    "js": "javascript", "ts": "typescript", "node": "node.js", "nodejs": "node.js",
+    "reactjs": "react", "rest api": "restful api", "api rest": "restful api",
+    "ml": "machine learning", "ai": "artificial intelligence",
+    "scikit learn": "scikit-learn", "sklearn": "scikit-learn",
+    "microsoft azure": "azure", "amazon web services": "aws"
+  },
+  "approved_partials": {}
+}

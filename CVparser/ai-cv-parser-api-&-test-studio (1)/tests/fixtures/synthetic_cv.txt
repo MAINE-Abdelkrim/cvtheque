@@ -1,0 +1,51 @@
+Jean-François Dupont
+Développeur Full-Stack Python & React
+Email : jean.dupont@example.com
+Téléphone : +33 6 12 34 56 78
+Localisation : Paris, France
+LinkedIn : linkedin.com/in/jf-dupont
+GitHub : github.com/jfdupont
+
+RÉSUMÉ PROFESSIONNEL
+Ingénieur logiciel passionné avec plus de 5 ans d'expérience dans la conception et le développement d'applications web performantes, robustes et écologiquement conçues. Spécialisé en Python, FastAPI, React et architectures cloud AWS.
+
+EXPÉRIENCES PROFESSIONNELLES
+
+Développeur Senior Full-Stack | TechSolutions SAS | Paris, France
+Janvier 2021 – Présent
+- Conception et architecture d'API RESTful haute performance avec FastAPI et PostgreSQL.
+- Mise en place d'interfaces utilisateurs réactives avec React, TypeScript et Tailwind CSS.
+- Implémentation de pipelines CI/CD automatisés via GitHub Actions et Docker.
+- Optimisation des requêtes de base de données réduisant la latence globale de 40%.
+
+Développeur Backend Python | DataCorp France | Lyon, France
+Septembre 2018 – Décembre 2020
+- Développement de microservices d'ingestion de données en Python et Celery.
+- Intégration de modèles d'analyse de données et traitement automatique du langage naturel.
+- Rédaction de tests unitaires et d'intégration garantissant une couverture de code de 90%.
+
+FORMATION
+
+Diplôme d'Ingénieur en Informatique | Université de Technologie de Compiègne (UTC)
+2015 – 2018 | Compiègne, France
+
+Licence en Sciences Informatiques | Université Paris-Saclay
+2012 – 2015 | Orsay, France
+
+COMPÉTENCES
+
+- Langages de programmation : Python, JavaScript, TypeScript, SQL, HTML5, CSS3
+- Frameworks & Bibliothèques : FastAPI, Django, React, Next.js, PyTest
+- DevOps & Cloud : Docker, Kubernetes, AWS, Git, Linux
+- Bases de données : PostgreSQL, Redis, MongoDB
+
+LANGUES
+
+- Français : Langue maternelle
+- Anglais : Courant (TOEIC 925/990)
+- Espagnol : Niveau intermédiaire (B1)
+
+CERTIFICATIONS
+
+- AWS Certified Solutions Architect – Associate (2022)
+- Professional Scrum Master I (PSM I) (2021)
