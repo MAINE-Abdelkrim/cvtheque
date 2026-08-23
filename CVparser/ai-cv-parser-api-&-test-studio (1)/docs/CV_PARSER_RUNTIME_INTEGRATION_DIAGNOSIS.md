@@ -25,8 +25,8 @@ Two plausible source copies were found:
 
 | Source | Geometry ownership | Status |
 | --- | --- | --- |
-| `C:\Users\maryem\Desktop\project stage\cvtheque\CVparser\ai-cv-parser-api-&-test-studio (1)` | Present | Current validated source and `.venv-llm` |
-| `C:\Users\maryem\Downloads\ai-cv-parser-api-&-test-studio (1)` | Absent | Older copy; not used by port 8001 |
+| `<repository-root>\CVparser\ai-cv-parser-api-&-test-studio (1)` | Present | Current validated source and `.venv-llm` |
+| `<obsolete-download-location>\ai-cv-parser-api-&-test-studio (1)` | Absent | Older copy; not used by port 8001 |
 
 The active project modules resolve to the first source tree. The runtime-selected files include `app/main.py`, the extraction pipeline, GeometrySectionService, and the experience, education, and certification extractors. Their combined diagnostic SHA-256 prefix after the restart was `adda6c4257fc`.
 
@@ -42,7 +42,7 @@ After correction, port 8001 was served by PID 484 using Python 3.12 and:
 
 ```text
 python -B -m uvicorn app.main:app
-  --app-dir C:\Users\maryem\Desktop\project stage\cvtheque\CVparser\ai-cv-parser-api-&-test-studio (1)
+  --app-dir "<repository-root>\CVparser\ai-cv-parser-api-&-test-studio (1)"
   --host 127.0.0.1 --port 8001
 ```
 

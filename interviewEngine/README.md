@@ -81,7 +81,7 @@ Each async provider operation has an independent deadline. Transient unavailabil
 
 Validation enforces question IDs and text limits, intent-compatible category/difficulty/grounding, bounded scores, controlled classifications, bounded feedback lists, report/session coherence, and assessed-category accuracy. A failed operation is never saved as a partial session transition.
 
-Operational logs contain only operation, provider name, session ID, result state, and duration. They never include CV/job content, candidate identity, answers, prompts, credentials, or raw provider responses.
+Operational logs contain only operation, provider name, result state, and duration. They never include session IDs, CV/job content, candidate identity, answers, prompts, credentials, or raw provider responses.
 
 ## Install and run
 

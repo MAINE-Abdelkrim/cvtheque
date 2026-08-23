@@ -1,7 +1,7 @@
 # CVparser Integration Audit
 
 Audit date: 2026-08-06  
-Repository root: `C:\Users\maryem\Desktop\project stage\cvtheque`  
+Repository root: `<repository-root>`
 Scope: read-only architecture, integration, security, compatibility, build, test, and runtime analysis. No integration was implemented.
 
 ## 1. Executive summary

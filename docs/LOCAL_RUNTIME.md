@@ -14,7 +14,7 @@ Browser :3000
        -> Gemini API (optional description import only)
 ```
 
-Express owns authentication checks and Firestore access for canonical CVs, canonical Jobs, Admin mutations, matching, and Interview ownership. The Python services receive JSON/files from Express. In demo mode, Parser and Matching are stateless and Interview uses process-local in-memory persistence.
+Express owns authentication checks and Firestore access for canonical CVs, canonical Jobs, Admin mutations, matching, and Interview ownership. The Python services receive JSON/files from Express. Parser and Matching are stateless. Interview can use process-local in-memory persistence for isolated demos, while the verified persistence E2E uses the Firestore repository.
 
 ## Runtime matrix
 
@@ -23,7 +23,7 @@ Express owns authentication checks and Firestore access for canonical CVs, canon
 | Express + Vite | repository root | `npm run dev` | 3000 | `/api/health` | Local service URLs and the same Interview token as the Engine; Firebase only for live authentication/persistence |
 | CV Parser | repository root | `npm run dev:parser` | 8001 | `/health` | `MODEL_ENABLED=false` |
 | Matching Engine | repository root | `npm run dev:matching` | 8002 | `/health` | None for deterministic scoring |
-| Interview Engine | repository root | `npm run dev:interview` | 8003 | `/health` | `INTERVIEW_PROVIDER=mock`, `INTERVIEW_REPOSITORY=in_memory`, internal auth enabled, and a process-only token |
+| Interview Engine | repository root | `npm run dev:interview` | 8003 | `/health` | `INTERVIEW_PROVIDER=mock`, `INTERVIEW_REPOSITORY=firestore` for persistence E2E, Admin configuration, internal auth enabled, and a process-only token |
 
 Job AI runs inside Express. It is not needed for the deterministic E2E/demo path; create Jobs manually and leave `GEMINI_API_KEY` unset.
 
@@ -128,10 +128,12 @@ Generate a temporary local token without writing it to a file. Set the same valu
 ```powershell
 Set-Location interviewEngine
 $env:INTERVIEW_PROVIDER='mock'
-$env:INTERVIEW_REPOSITORY='in_memory'
+$env:INTERVIEW_REPOSITORY='firestore'
+$env:INTERVIEW_FIREBASE_PROJECT_ID='<development-project-id>'
+$env:INTERVIEW_FIREBASE_CREDENTIALS_FILE='<uncommitted-local-credential-path>'
 $env:INTERVIEW_INTERNAL_AUTH_ENABLED='true'
 $env:INTERVIEW_INTERNAL_API_TOKEN='<temporary-process-only-token>'
-& .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8003 --workers 1
+& .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8003 --workers 1 --no-access-log
 ```
 
 ### Terminal 4: Application
@@ -182,7 +184,7 @@ Interactive Python API documentation is available on each Python service's `/doc
 
 - CV Parser: deterministic extraction with `MODEL_ENABLED=false`.
 - Matching: deterministic rules engine.
-- Interview: `mock` provider with `in_memory` repository and internal authentication enabled.
+- Interview: `mock` provider with `firestore` for persistence E2E, or `in_memory` only for isolated offline demos; internal authentication remains enabled.
 - Job creation: manual structured CanonicalJob path.
 - Gemini: disabled and unnecessary; expected calls are zero.
 
