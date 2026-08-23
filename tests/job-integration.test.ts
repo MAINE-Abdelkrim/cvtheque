@@ -210,6 +210,35 @@ test('public canonical response excludes internal Firebase metadata', async () =
   for (const forbidden of ['_fieldsProto', 'writeTime', 'readTime', 'serviceAccount']) assert.equal(serialized.includes(forbidden), false);
 });
 
+test('Job logging excludes recruiter and document identifiers', async () => {
+  class RetrievalFailingJobs extends MemoryJobs {
+    async getJobsByRecruiter(_uid: string): Promise<CanonicalJob[]> {
+      throw Object.assign(new Error('failed'), { code: 'UNAVAILABLE' });
+    }
+  }
+  const repository = new RetrievalFailingJobs();
+  const logs: unknown[][] = [];
+  const originalInfo = console.info;
+  const originalWarn = console.warn;
+  console.info = (...args: unknown[]) => logs.push(args);
+  console.warn = (...args: unknown[]) => logs.push(args);
+  try {
+    await create(repository, validInput, 'private-recruiter-uid');
+    const request: any = { recruiter: { uid: 'private-recruiter-uid', role: 'RECRUITER', subscription: 'FREE' } };
+    const { response } = recorder();
+    await createMyJobsHandler(() => repository)(request, response, () => undefined);
+  } finally {
+    console.info = originalInfo;
+    console.warn = originalWarn;
+  }
+  const output = JSON.stringify(logs);
+  assert.equal(output.includes('private-recruiter-uid'), false);
+  assert.equal(output.includes('firestore-1'), false);
+  assert.equal(output.includes('recruiterId'), false);
+  assert.equal(output.includes('jobId'), false);
+  assert.equal(output.includes('UNAVAILABLE'), true);
+});
+
 test('canonical schema can validate matching content without scoring weights', () => {
   const parsed = canonicalJobInputSchema.parse(validInput);
   assert.equal('scoring_weights' in parsed, false);

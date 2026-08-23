@@ -47,13 +47,13 @@ export function createJobCreateHandler(repositoryFactory: () => JobRepository = 
     try {
       const input = canonicalJobInputSchema.parse(request.body);
       const job = await repositoryFactory().createCanonicalJob(request.recruiter.uid, input);
-      console.info('[Job] canonical job created', { jobId: job.id, recruiterId: request.recruiter.uid, schemaVersion: job.schemaVersion, status: job.status, durationMs: Date.now() - startedAt });
+      console.info('[Job] canonical job created', { schemaVersion: job.schemaVersion, status: job.status, durationMs: Date.now() - startedAt });
       return response.status(201).json(job);
     } catch (error) {
       if (error instanceof ZodError) {
         return sendError(response, 400, 'JOB_VALIDATION_FAILED', 'The job data is invalid.', error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`));
       }
-      console.warn('[Job] persistence failed', { recruiterId: request.recruiter.uid, durationMs: Date.now() - startedAt });
+      console.warn('[Job] persistence failed', { durationMs: Date.now() - startedAt });
       return sendError(response, 503, 'JOB_PERSISTENCE_FAILED', 'The job could not be saved. Please try again.');
     }
   };
@@ -66,7 +66,6 @@ export function createMyJobsHandler(repositoryFactory: () => JobRepository = cre
       return response.json({ jobs: await repositoryFactory().getJobsByRecruiter(request.recruiter.uid) });
     } catch (error) {
       console.warn('[Job] recruiter job retrieval failed', {
-        recruiterId: request.recruiter.uid,
         errorCode: typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : 'UNKNOWN',
       });
       return sendError(response, 503, 'JOB_RETRIEVAL_FAILED', 'Jobs could not be loaded.');

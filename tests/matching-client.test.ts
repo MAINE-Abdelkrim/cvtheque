@@ -5,7 +5,7 @@ import type { RecruiterMatchingResponse } from '../src/types/matching';
 
 const valid: RecruiterMatchingResponse = {
   jobId: 'job/one', jobTitle: 'Backend', evaluatedCandidates: 1, eligibleCandidates: 1, invalidCandidates: 0, summary: 'Done',
-  topCandidates: [{ rank: 1, candidateId: 'uid-1', cvId: 'cv-1', candidateName: 'Candidate', score: 87, matchLevel: 'Strong match', eligible: true,
+  topCandidates: [{ rank: 1, cvId: 'cv-1', candidateName: 'Candidate', score: 87, matchLevel: 'Strong match', eligible: true,
     eligibilityMessage: 'Eligible', summary: 'Good fit', requiredSkills: { matched: ['Python'], missing: ['Docker'], display: '1 of 2' },
     experience: { candidateYears: 3, requiredYears: 2, status: 'Meets requirement', display: '3 years found' },
     education: { status: 'Compatible', display: 'Compatible' }, languages: { status: 'Compatible', display: 'Compatible' },
@@ -55,7 +55,7 @@ test('matching client accepts an empty result and preserves backend Top 3 order'
   });
   assert.deepEqual(emptyResult.topCandidates, []);
 
-  const second = { ...valid.topCandidates[0], rank: 2, candidateId: 'uid-2', cvId: 'cv-2', candidateName: 'Second', score: 99 };
+  const second = { ...valid.topCandidates[0], rank: 2, cvId: 'cv-2', candidateName: 'Second', score: 99 };
   const ordered = { ...valid, evaluatedCandidates: 2, topCandidates: [valid.topCandidates[0], second] };
   const orderedResult = await matchJobCandidates('job-1', {
     getCurrentUser: () => ({ async getIdToken() { return 'token'; } }),

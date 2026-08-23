@@ -114,7 +114,6 @@ export type MatchingRankingResponse = z.infer<typeof matchingRankingResponseSche
 
 export interface RecruiterCandidateMatch {
   rank: number;
-  candidateId: string;
   cvId: string;
   candidateName: string | null;
   score: number;
@@ -153,7 +152,6 @@ export const recruiterMatchingResponseSchema = z.object({
   invalidCandidates: z.number().int().nonnegative(),
   topCandidates: z.array(z.object({
     rank: z.number().int().positive(),
-    candidateId: z.string().min(1),
     cvId: z.string().min(1),
     candidateName: z.string().nullable(),
     score: z.number().min(0).max(100),

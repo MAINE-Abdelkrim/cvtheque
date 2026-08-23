@@ -123,7 +123,7 @@ async def test_operational_logs_exclude_private_content(
     combined = " ".join(record.getMessage() for record in caplog.records)
     assert private_answer not in combined
     assert "evaluate_answer" in combined
-    assert current.session_id in combined
+    assert current.session_id not in combined
 
 
 async def test_fallback_disabled_propagates_safe_failure() -> None:

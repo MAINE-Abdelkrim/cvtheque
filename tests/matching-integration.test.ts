@@ -112,11 +112,30 @@ test('owner matches multiple CVs in exactly one bulk call with safe options and 
   assert.deepEqual(requests[0].job.mandatory_requirements, [{
     code: 'canonical-mandatory-1', description: 'Free-text permit', satisfied: null,
   }]);
-  assert.equal(result.body.topCandidates[0].candidateId, 'uid-1');
   assert.equal(result.body.topCandidates[0].cvId, 'cv-1');
   assert.equal(result.body.invalidCandidates, 0);
   const publicBody = JSON.stringify(result.body);
-  for (const forbidden of ['email', 'phone', 'parsedData', 'sha256', 'technical_result']) assert.equal(publicBody.includes(forbidden), false);
+  for (const forbidden of ['email', 'phone', 'parsedData', 'sha256', 'technical_result', 'uid-1', 'candidateId']) assert.equal(publicBody.includes(forbidden), false);
+});
+
+test('matching logs exclude recruiter, Job, CV, and candidate identifiers', async () => {
+  const logs: unknown[][] = [];
+  const originalInfo = console.info;
+  const originalWarn = console.warn;
+  console.info = (...args: unknown[]) => logs.push(args);
+  console.warn = (...args: unknown[]) => logs.push(args);
+  try {
+    await invoke({ cvs: [cv('private-cv-id', 'private-candidate-uid')], rank: async () => ranking('private-cv-id') });
+    await invoke({ rank: async () => { throw new MatchingClientError('MATCHING_ENGINE_UNAVAILABLE', 'unavailable'); } });
+  } finally {
+    console.info = originalInfo;
+    console.warn = originalWarn;
+  }
+  const output = JSON.stringify(logs);
+  for (const forbidden of ['owner', 'job-1', 'private-cv-id', 'private-candidate-uid', 'recruiterId', 'jobId']) {
+    assert.equal(output.includes(forbidden), false);
+  }
+  assert.equal(output.includes('MATCHING_ENGINE_UNAVAILABLE'), true);
 });
 
 test('other owner and missing job receive non-disclosing 404', async () => {

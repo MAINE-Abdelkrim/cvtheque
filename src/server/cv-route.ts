@@ -82,7 +82,7 @@ export function createCVParseHandler(
         );
         if (equivalent) {
           response.json(toPublicCVResponse(equivalent));
-          console.info('[CV Parse] equivalent canonical CV returned', { cvId: equivalent.id });
+          console.info('[CV Parse] equivalent canonical CV returned');
           return;
         }
       } catch {
@@ -121,7 +121,6 @@ export function createCVParseHandler(
 
       response.json(toPublicCVResponse(persisted));
       console.info('[CV Parse] canonical CV saved', {
-        cvId: persisted.id,
         parserVersion: CV_PARSER_VERSION,
         schemaVersion: CV_SCHEMA_VERSION,
         durationMs: Date.now() - startedAt,
@@ -134,7 +133,6 @@ export function createCVParseHandler(
 
       console.warn('[CV Parse]', {
         requestId,
-        userId: request.candidate?.uid ?? 'unverified',
         errorCode: safeError.code,
         httpStatus: safeError.status,
         durationMs: Date.now() - startedAt,

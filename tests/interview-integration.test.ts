@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import type { CanonicalPersistedCV, NewCanonicalCV } from '../src/types/cv-parser';
 import type { CreateInterviewResponse, InterviewSession, SubmitAnswerResponse } from '../src/types/interview';
@@ -194,4 +195,11 @@ test('answer validation enforces Engine limits and answer content is never logge
   assert.equal(blank.status, 400);
   assert.equal(oversized.status, 400);
   assert.equal(called, false);
+});
+
+test('local Interview Engine startup disables access logs that expose session URLs', () => {
+  const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const command = packageJson.scripts?.['dev:interview'];
+  assert.equal(typeof command, 'string');
+  assert.match(command, /(?:^|\s)--no-access-log(?:\s|$)/);
 });

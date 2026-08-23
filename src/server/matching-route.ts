@@ -43,7 +43,7 @@ export function createJobMatchingHandler(dependencies: MatchingRouteDependencies
         return sendError(response, 422, 'MATCHING_CANDIDATE_LIMIT_EXCEEDED', `Matching supports at most ${MAX_CANDIDATES} candidates per request.`);
       }
 
-      const correlations = new Map(cvs.map(cv => [cv.id, { uid: cv.uid, cvId: cv.id }]));
+      const correlations = new Map(cvs.map(cv => [cv.id, cv.id]));
       const ranking = await rank({
         job: adaptCanonicalJob(job),
         candidates: cvs.map(adaptCanonicalCV),
@@ -55,8 +55,7 @@ export function createJobMatchingHandler(dependencies: MatchingRouteDependencies
         if (!correlation) throw new MatchingClientError('MATCHING_ENGINE_INVALID_RESPONSE', 'The Matching Engine returned an unknown candidate identifier.');
         return {
           rank: candidate.rank,
-          candidateId: correlation.uid,
-          cvId: correlation.cvId,
+          cvId: correlation,
           candidateName: candidate.candidate_name,
           score: candidate.score,
           matchLevel: candidate.match_level,
@@ -84,16 +83,16 @@ export function createJobMatchingHandler(dependencies: MatchingRouteDependencies
         topCandidates,
         summary: ranking.summary,
       };
-      console.info('[Matching] ranking complete', { jobId: job.id, recruiterId: request.recruiter.uid, evaluatedCandidates: result.evaluatedCandidates, returnedCandidates: result.topCandidates.length, durationMs: Date.now() - startedAt });
+      console.info('[Matching] ranking complete', { evaluatedCandidates: result.evaluatedCandidates, returnedCandidates: result.topCandidates.length, durationMs: Date.now() - startedAt });
       return response.json(result);
     } catch (error) {
       if (error instanceof MatchingClientError) {
         const status = error.code === 'MATCHING_ENGINE_TIMEOUT' ? 504
           : error.code === 'MATCHING_ENGINE_UNAVAILABLE' ? 503 : 502;
-        console.warn('[Matching] engine request failed', { recruiterId: request.recruiter.uid, errorCode: error.code, durationMs: Date.now() - startedAt });
+        console.warn('[Matching] engine request failed', { errorCode: error.code, durationMs: Date.now() - startedAt });
         return sendError(response, status, error.code, error.message);
       }
-      console.warn('[Matching] retrieval failed', { recruiterId: request.recruiter.uid, durationMs: Date.now() - startedAt });
+      console.warn('[Matching] retrieval failed', { durationMs: Date.now() - startedAt });
       return sendError(response, 503, 'MATCHING_DATA_UNAVAILABLE', 'The matching data could not be loaded.');
     }
   };

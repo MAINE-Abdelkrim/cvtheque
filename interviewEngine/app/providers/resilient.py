@@ -128,9 +128,8 @@ class ResilientInterviewProvider:
 
         if fallback_call is not None:
             logger.warning(
-                "provider fallback activated operation=%s session_id=%s provider=%s",
+                "provider fallback activated operation=%s provider=%s",
                 operation,
-                session_id,
                 self._fallback_name,
             )
             return await self._attempt(
@@ -154,9 +153,8 @@ class ResilientInterviewProvider:
     ) -> ResultT:
         started = monotonic()
         logger.info(
-            "provider request started operation=%s session_id=%s provider=%s",
+            "provider request started operation=%s provider=%s",
             operation,
-            session_id,
             provider_name,
         )
         try:
@@ -165,18 +163,16 @@ class ResilientInterviewProvider:
             validated = validator(result)
         except TimeoutError as exc:
             logger.warning(
-                "provider timeout operation=%s session_id=%s provider=%s",
+                "provider timeout operation=%s provider=%s",
                 operation,
-                session_id,
                 provider_name,
             )
             raise ProviderTimeoutError("Interview provider request timed out") from exc
         except ProviderInvalidResponseError as exc:
             logger.warning(
-                "provider validation failed operation=%s session_id=%s provider=%s "
+                "provider validation failed operation=%s provider=%s "
                 "validation_reason=%s",
                 operation,
-                session_id,
                 provider_name,
                 exc.reason.value,
             )
@@ -187,16 +183,14 @@ class ResilientInterviewProvider:
             raise
         except Exception as exc:
             logger.warning(
-                "provider unavailable operation=%s session_id=%s provider=%s",
+                "provider unavailable operation=%s provider=%s",
                 operation,
-                session_id,
                 provider_name,
             )
             raise ProviderUnavailableError("Interview provider is unavailable") from exc
         logger.info(
-            "provider request succeeded operation=%s session_id=%s provider=%s duration_ms=%d",
+            "provider request succeeded operation=%s provider=%s duration_ms=%d",
             operation,
-            session_id,
             provider_name,
             round((monotonic() - started) * 1_000),
         )

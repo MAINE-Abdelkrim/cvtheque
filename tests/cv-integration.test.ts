@@ -436,9 +436,20 @@ test('parser failure and invalid PDF do not write canonical records', async () =
   const request = await multipartRequest([['file', new Blob(['not-pdf'], { type: 'application/pdf' }), 'cv.pdf']]);
   request.candidate = { uid: 'candidate-test', role: 'CANDIDATE' };
   const { record, response } = responseRecorder();
-  await createCVParseHandler(fetch as typeof fetch, () => repository)(request, response, () => undefined);
+  const warnings: unknown[][] = [];
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => warnings.push(args);
+  try {
+    await createCVParseHandler(fetch as typeof fetch, () => repository)(request, response, () => undefined);
+  } finally {
+    console.warn = originalWarn;
+  }
   assert.equal(record.status, 400);
   assert.equal(repository.saveCalls, 0);
+  const warningOutput = JSON.stringify(warnings);
+  assert.equal(warningOutput.includes('candidate-test'), false);
+  assert.equal(warningOutput.includes('userId'), false);
+  assert.equal(warningOutput.includes('INVALID_PDF'), true);
 });
 
 test('partial but meaningful parser result is persisted', async () => {
