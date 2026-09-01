@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, X, Languages as LanguagesIcon } from 'lucide-react';
 import type { LanguageRequirement } from '../../types';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { FormField, Input, Select } from '../ui/form-controls';
 
 export const LanguagesField: React.FC<{ values: LanguageRequirement[]; onChange: (values: LanguageRequirement[]) => void }> = ({ values, onChange }) => {
   const [name, setName] = useState('');
   const [level, setLevel] = useState<LanguageRequirement['minimum_level']>('intermediate');
   const [mandatory, setMandatory] = useState(false);
+
   const add = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -16,14 +14,101 @@ export const LanguagesField: React.FC<{ values: LanguageRequirement[]; onChange:
     setName('');
     setMandatory(false);
   };
-  return <div className="space-y-3">
-    <div><h3 className="text-sm font-medium text-[var(--foreground)]">Langues requises</h3><p className="mt-1 text-xs text-[var(--muted-foreground)]">Ajoutez uniquement les langues utiles pour le poste.</p></div>
-    {values.length > 0 && <div className="space-y-2">{values.map((language, index) => <div key={`${language.name}-${index}`} className="flex flex-col justify-between gap-3 rounded-lg border border-[var(--border)] px-3 py-2.5 sm:flex-row sm:items-center"><div className="flex flex-wrap items-center gap-2"><span className="text-sm font-medium text-[var(--foreground)]">{language.name}</span><Badge>{language.minimum_level}</Badge>{language.mandatory && <Badge tone="danger">Obligatoire</Badge>}</div><Button variant="ghost" size="sm" onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Retirer ${language.name}`}><Trash2 className="h-4 w-4" /></Button></div>)}</div>}
-    <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
-      <FormField label="Langue" htmlFor="new-language"><Input id="new-language" value={name} onChange={event => setName(event.target.value)} placeholder="Ex. Français" /></FormField>
-      <FormField label="Niveau minimum" htmlFor="new-language-level"><Select id="new-language-level" value={level} onChange={event => setLevel(event.target.value as LanguageRequirement['minimum_level'])}><option value="beginner">Débutant</option><option value="intermediate">Intermédiaire</option><option value="fluent">Courant</option><option value="native">Natif</option></Select></FormField>
-      <label className="flex min-h-10 items-center gap-2 text-sm text-[var(--foreground)]"><input type="checkbox" checked={mandatory} onChange={event => setMandatory(event.target.checked)} className="h-4 w-4 rounded border-[var(--border-strong)] accent-[var(--primary)]" />Obligatoire</label>
-      <Button variant="outline" onClick={add} disabled={!name.trim()}><Plus className="h-4 w-4" />Ajouter</Button>
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
+          LANGUAGES REQUISES (`required_languages`)
+        </label>
+        <span className="text-[10px] font-mono text-[var(--muted-foreground)] uppercase">LINGUISTIC TELEMETRY</span>
+      </div>
+
+      <p className="text-xs text-[var(--muted-foreground)] font-sans">
+        Specify required languages and minimum proficiency thresholds.
+      </p>
+
+      {values.length > 0 && (
+        <div className="space-y-2">
+          {values.map((language, index) => {
+            const formattedIdx = String(index + 1).padStart(2, '0');
+            return (
+              <div
+                key={`${language.name}-${index}`}
+                className="flex items-center justify-between p-3.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-xs"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[10px] font-bold text-[var(--primary)]">{formattedIdx}</span>
+                  <span className="font-mono font-bold text-[var(--foreground)] uppercase tracking-wider">{language.name}</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-[var(--primary-subtle)] text-[var(--primary)] font-mono text-[10px] uppercase font-bold border border-[var(--primary)]/30">
+                    {language.minimum_level}
+                  </span>
+                  {language.mandatory && (
+                    <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 font-mono text-[10px] uppercase font-bold border border-rose-500/20">
+                      MANDATORY
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+                  aria-label={`Retirer ${language.name}`}
+                  className="text-[var(--muted-foreground)] hover:text-rose-400 transition-colors cursor-pointer p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
+        <div className="sm:col-span-4">
+          <input
+            type="text"
+            value={name}
+            onChange={event => setName(event.target.value)}
+            placeholder="Ex. French"
+            className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-xs font-mono text-[var(--foreground)] placeholder-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-all"
+          />
+        </div>
+        <div className="sm:col-span-4">
+          <select
+            value={level}
+            onChange={event => setLevel(event.target.value as LanguageRequirement['minimum_level'])}
+            className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-xs font-mono text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-all cursor-pointer"
+          >
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="fluent">Fluent</option>
+            <option value="native">Native</option>
+          </select>
+        </div>
+        <div className="sm:col-span-2 flex items-center px-2">
+          <label className="flex items-center gap-2 text-xs font-mono text-[var(--foreground)] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={mandatory}
+              onChange={event => setMandatory(event.target.checked)}
+              className="w-4 h-4 rounded border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--primary)] focus:ring-0 cursor-pointer"
+            />
+            <span>Required</span>
+          </label>
+        </div>
+        <div className="sm:col-span-2">
+          <button
+            type="button"
+            onClick={add}
+            disabled={!name.trim()}
+            className="w-full h-full min-h-[41px] px-4 rounded-xl bg-[var(--primary)] hover:opacity-90 disabled:opacity-40 text-white font-mono text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>ADD</span>
+          </button>
+        </div>
+      </div>
     </div>
-  </div>;
+  );
 };
+

@@ -1,5 +1,61 @@
 import React from 'react';
 
-export const PageHeader: React.FC<{ title: string; description?: string; actions?: React.ReactNode; className?: string }> = ({ title, description, actions, className = '' }) => <header className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${className}`}><div><h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em] text-[var(--foreground)]">{title}</h1>{description && <p className="mt-1.5 max-w-2xl text-sm text-[var(--muted-foreground)]">{description}</p>}</div>{actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}</header>;
+export interface PageHeaderProps {
+  title: string;
+  description?: string;
+  category?: string;
+  actions?: React.ReactNode;
+  className?: string;
+}
 
-export const SectionHeader: React.FC<{ title: string; description?: string; actions?: React.ReactNode; className?: string }> = ({ title, description, actions, className = '' }) => <div className={`flex items-start justify-between gap-4 ${className}`}><div><h2 className="text-lg font-semibold text-[var(--foreground)]">{title}</h2>{description && <p className="mt-1 text-[13px] text-[var(--muted-foreground)]">{description}</p>}</div>{actions}</div>;
+export const PageHeader: React.FC<PageHeaderProps> = ({
+  title,
+  description,
+  category,
+  actions,
+  className = '',
+}) => (
+  <header className={`flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between pb-6 border-b border-[var(--border)] ${className}`}>
+    <div className="space-y-1.5">
+      {category && (
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-widest text-[var(--primary)] block">
+          // {category}
+        </span>
+      )}
+      <h1 className="text-2xl sm:text-4xl font-display font-extrabold tracking-tight text-[var(--foreground)] leading-none">
+        {title}
+      </h1>
+      {description && (
+        <p className="max-w-2xl text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed pt-1">
+          {description}
+        </p>
+      )}
+    </div>
+    {actions && <div className="flex shrink-0 flex-wrap items-center gap-2.5">{actions}</div>}
+  </header>
+);
+
+export const SectionHeader: React.FC<{
+  title: string;
+  description?: string;
+  tag?: string;
+  actions?: React.ReactNode;
+  className?: string;
+}> = ({ title, description, tag, actions, className = '' }) => (
+  <div className={`flex items-end justify-between gap-4 pb-3 border-b border-[var(--border-subtle)] ${className}`}>
+    <div>
+      {tag && (
+        <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--muted-foreground)] block mb-0.5">
+          {tag}
+        </span>
+      )}
+      <h2 className="text-base sm:text-lg font-display font-bold text-[var(--foreground)] tracking-tight">
+        {title}
+      </h2>
+      {description && (
+        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{description}</p>
+      )}
+    </div>
+    {actions && <div className="shrink-0">{actions}</div>}
+  </div>
+);

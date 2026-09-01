@@ -145,12 +145,11 @@ export class FirebaseAdminCVRepository implements CVRepository {
     const snapshot = await this.collection()
       .where('uid', '==', uid)
       .where('parsing.schemaVersion', '==', CV_SCHEMA_VERSION)
-      .orderBy('createdAt', 'desc')
       .get();
-    return snapshot.docs.flatMap((document) => {
+    return sortCanonicalCVsNewestFirst(snapshot.docs.flatMap((document) => {
       const mapped = mapDocument(document.id, document.data());
       return mapped ? [mapped] : [];
-    });
+    }));
   }
 
   async getCurrentCanonicalCVs() {

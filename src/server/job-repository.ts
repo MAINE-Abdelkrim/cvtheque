@@ -96,12 +96,11 @@ export class FirebaseAdminJobRepository implements JobRepository {
     const snapshot = await this.collection()
       .where('status', '==', 'OPEN')
       .where('schemaVersion', '==', JOB_SCHEMA_VERSION)
-      .orderBy('createdAt', 'desc')
       .get();
-    return snapshot.docs.flatMap((document) => {
+    return sortCanonicalJobsNewestFirst(snapshot.docs.flatMap((document) => {
       const mapped = mapJob(document.id, document.data());
       return mapped ? [mapped] : [];
-    });
+    }));
   }
 
   async deleteRecruiterJob(jobId: string, recruiterId: string) {

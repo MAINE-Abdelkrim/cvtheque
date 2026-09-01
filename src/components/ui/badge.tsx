@@ -1,19 +1,59 @@
 import React from 'react';
 
 export type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
+
 const tones: Record<BadgeTone, string> = {
-  neutral: 'border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--muted-foreground)]',
-  primary: 'border-[color-mix(in_srgb,var(--primary)_25%,transparent)] bg-[color-mix(in_srgb,var(--primary)_9%,transparent)] text-[var(--primary)]',
-  success: 'border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-[color-mix(in_srgb,var(--success)_9%,transparent)] text-[var(--success)]',
-  warning: 'border-[color-mix(in_srgb,var(--warning)_25%,transparent)] bg-[color-mix(in_srgb,var(--warning)_9%,transparent)] text-[var(--warning)]',
-  danger: 'border-[color-mix(in_srgb,var(--danger)_25%,transparent)] bg-[color-mix(in_srgb,var(--danger)_9%,transparent)] text-[var(--danger)]',
-  info: 'border-[color-mix(in_srgb,var(--info)_25%,transparent)] bg-[color-mix(in_srgb,var(--info)_9%,transparent)] text-[var(--info)]',
+  neutral:
+    'border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground-secondary)]',
+  primary:
+    'border-[var(--primary-subtle)] bg-[var(--primary-subtle)] text-[var(--primary)] font-semibold',
+  success:
+    'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 font-medium',
+  warning:
+    'border-amber-500/20 bg-amber-500/10 text-amber-400 font-medium',
+  danger:
+    'border-rose-500/20 bg-rose-500/10 text-rose-400 font-medium',
+  info:
+    'border-sky-500/20 bg-sky-500/10 text-sky-400 font-medium',
 };
 
-export const Badge: React.FC<React.HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone }> = ({ tone = 'neutral', className = '', ...props }) => <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${tones[tone]} ${className}`} {...props} />;
+export const Badge: React.FC<React.HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone; mono?: boolean }> = ({
+  tone = 'neutral',
+  mono = true,
+  className = '',
+  ...props
+}) => (
+  <span
+    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] ${
+      mono ? 'font-mono tracking-tight' : 'font-sans'
+    } ${tones[tone]} ${className}`}
+    {...props}
+  />
+);
 
 export const StatusBadge: React.FC<{ status: string; className?: string }> = ({ status, className }) => {
   const normalized = status.toUpperCase();
-  const tone: BadgeTone = ['OPEN', 'ELIGIBLE', 'PROCESSED', 'ACTIVE'].includes(normalized) ? 'success' : ['CLOSED', 'INELIGIBLE', 'ERROR', 'INACTIVE'].includes(normalized) ? 'danger' : normalized.includes('WARN') ? 'warning' : 'neutral';
-  return <Badge tone={tone} className={className}>{status}</Badge>;
+  const tone: BadgeTone = ['OPEN', 'ELIGIBLE', 'PROCESSED', 'ACTIVE', 'COMPLETED'].includes(normalized)
+    ? 'success'
+    : ['CLOSED', 'INELIGIBLE', 'ERROR', 'INACTIVE', 'REJECTED'].includes(normalized)
+    ? 'danger'
+    : normalized.includes('WARN') || normalized === 'PENDING'
+    ? 'warning'
+    : 'neutral';
+  return (
+    <Badge tone={tone} className={className}>
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${
+          tone === 'success'
+            ? 'bg-emerald-400'
+            : tone === 'danger'
+            ? 'bg-rose-400'
+            : tone === 'warning'
+            ? 'bg-amber-400'
+            : 'bg-[var(--muted-foreground)]'
+        }`}
+      />
+      <span>{status}</span>
+    </Badge>
+  );
 };

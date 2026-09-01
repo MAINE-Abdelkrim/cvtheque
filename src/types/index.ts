@@ -1,3 +1,5 @@
+import type { CVStructuredData } from './cv-parser';
+
 export type UserRole = 'ADMIN' | 'RECRUITER' | 'CANDIDATE';
 export type SubscriptionTier = 'FREE' | 'PREMIUM';
 
@@ -19,9 +21,16 @@ export interface CandidateCV {
   uid: string;
   fileName: string;
   fileURL?: string;
+  fileData?: string;
   aiScore?: number;
   feedback?: string;
   skills?: string[];
+  parsedData?: CVStructuredData;
+  fullName?: string | null;
+  jobTitle?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  location?: string | null;
   status: 'PENDING' | 'PROCESSED' | 'FAILED';
   createdAt: string;
 }
@@ -68,4 +77,48 @@ export interface JobPosting {
   schemaVersion?: number;
 }
 
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  cvId: string;
+  matchScore: number;
+  status: 'APPLIED' | 'REVIEWED' | 'REJECTED' | 'HIRED';
+  createdAt: string;
+}
+
+export type OralInterviewStage = 'INTRODUCTION' | 'EXPERIENCE' | 'TECHNICAL' | 'BEHAVIORAL' | 'COMPLETED';
+export type InterviewStage = OralInterviewStage;
+
+export interface OralInterviewMessage {
+  id: string;
+  sender: 'ai' | 'candidate';
+  stage: OralInterviewStage;
+  text: string;
+  timestamp: string;
+  audioUrl?: string;
+  score?: number;
+  feedback?: string;
+}
+export type InterviewMessage = OralInterviewMessage;
+
+export interface OralInterviewSession {
+  id: string;
+  candidateId: string;
+  jobId: string;
+  jobTitle: string;
+  currentStage: OralInterviewStage;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  audioMode: boolean;
+  messages: OralInterviewMessage[];
+  totalScore?: number;
+  classification?: string;
+  categoryScores?: Array<{ category: string; score: number; comment?: string }>;
+  summaryFeedback?: string;
+  createdAt?: string;
+  completedAt?: string;
+}
+export type InterviewSession = OralInterviewSession;
+
 export type { CanonicalJob, CanonicalJobInput, GeminiJobDraft } from './job';
+

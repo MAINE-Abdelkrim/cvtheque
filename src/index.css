@@ -1,109 +1,216 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --color-brand-primary: #4355c5;
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Syne", "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-primary: #0047FF;
+  --color-brand-secondary: #0A0B0E;
+  --color-brand-accent: #0047FF;
 }
 
-:root,
+/* ==========================================================================
+   DESIGN TOKENS & CSS VARIABLES (Awwwards-inspired Editorial Art Direction)
+   ========================================================================== */
+:root {
+  /* Core Architectural Obsidian Base (Dark by default) */
+  --background: #08090A;
+  --surface: #0E1013;
+  --surface-secondary: #14171C;
+  --surface-elevated: #1B1F26;
+  
+  --foreground: #F8F9FA;
+  --foreground-secondary: #C8CDD5;
+  --muted-foreground: #7B8492;
+  
+  --border: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  
+  /* Distinctive Accent: International Klein / Editorial Ultramarine */
+  --primary: #0047FF;
+  --primary-hover: #0038CC;
+  --primary-foreground: #FFFFFF;
+  --primary-subtle: rgba(0, 71, 255, 0.12);
+  
+  --accent: #0047FF;
+  --accent-foreground: #FFFFFF;
+  
+  /* Semantic Status Indicators */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #0284C7;
+  
+  --overlay: rgba(8, 9, 10, 0.82);
+  --shadow-overlay: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+}
+
+/* Light Theme Variables */
 .light {
-  color-scheme: light;
-  --background: #f6f7f9;
-  --foreground: #172033;
-  --surface: #ffffff;
-  --surface-secondary: #f1f3f6;
-  --border: #e2e6ec;
-  --border-strong: #c9d0da;
-  --muted: #eef1f5;
-  --muted-foreground: #667085;
-  --primary: #4355c5;
-  --primary-hover: #3546ad;
-  --primary-foreground: #ffffff;
-  --success: #16805b;
-  --warning: #a15c0b;
-  --danger: #c43d4b;
-  --info: #2563a9;
-  --focus-ring: #8290e8;
-  --overlay: rgba(17, 24, 39, 0.45);
-  --shadow-overlay: 0 18px 45px rgba(16, 24, 40, 0.14);
+  --background: #F8F9FA;
+  --surface: #FFFFFF;
+  --surface-secondary: #F1F3F5;
+  --surface-elevated: #E9ECEF;
+  
+  --foreground: #0A0B0D;
+  --foreground-secondary: #2D3139;
+  --muted-foreground: #6B7280;
+  
+  --border: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  
+  --primary: #0047FF;
+  --primary-hover: #0038CC;
+  --primary-foreground: #FFFFFF;
+  --primary-subtle: rgba(0, 71, 255, 0.08);
+  
+  --accent: #0047FF;
+  --accent-foreground: #FFFFFF;
+  
+  --overlay: rgba(10, 11, 13, 0.45);
+  --shadow-overlay: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
 }
 
-html:not(.light) {
-  color-scheme: dark;
-  --background: #111318;
-  --foreground: #eef0f4;
-  --surface: #191c22;
-  --surface-secondary: #22262e;
-  --border: #30353f;
-  --border-strong: #464d59;
-  --muted: #252a32;
-  --muted-foreground: #a5adba;
-  --primary: #8490e8;
-  --primary-hover: #98a2ed;
-  --primary-foreground: #111318;
-  --success: #57bd91;
-  --warning: #e6a755;
-  --danger: #ee7b86;
-  --info: #76aee2;
-  --focus-ring: #9ba5ef;
-  --overlay: rgba(0, 0, 0, 0.62);
-  --shadow-overlay: 0 18px 45px rgba(0, 0, 0, 0.35);
-}
-
+/* Base Resets */
 html {
-  min-width: 320px;
-  background: var(--background);
   font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+/* Precise Minimalist Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
   background: var(--background);
-  color: var(--foreground);
-  font-size: 14px;
-  line-height: 1.5;
-  text-rendering: optimizeLegibility;
 }
 
-button, input, textarea, select { font: inherit; }
-:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-::selection { background: color-mix(in srgb, var(--primary) 20%, transparent); }
+::-webkit-scrollbar-thumb {
+  background: var(--surface-secondary);
+  border-radius: 2px;
+}
 
-.ui-card {
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* ==========================================================================
+   EDITORIAL UI PATTERNS & UTILITIES
+   ========================================================================== */
+
+/* Editorial Architectural Panel */
+.editorial-panel {
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--foreground);
+  position: relative;
 }
 
-.ui-control {
+.editorial-panel-hover {
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.editorial-panel-hover:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+/* Fine Hairline Rule */
+.editorial-rule {
+  height: 1px;
+  background: var(--border);
   width: 100%;
-  min-height: 40px;
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  background: var(--surface);
-  color: var(--foreground);
-  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  border: none;
+  margin: 0;
 }
 
-.ui-control::placeholder { color: var(--muted-foreground); }
-.ui-control:hover:not(:disabled) { border-color: color-mix(in srgb, var(--border-strong) 65%, var(--foreground)); }
-.ui-control:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 22%, transparent); }
-.ui-control:disabled { cursor: not-allowed; background: var(--surface-secondary); color: var(--muted-foreground); opacity: 0.75; }
+/* Monospace Index Tag */
+.editorial-index {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
 
-.app-shell { background: var(--background); color: var(--foreground); }
-.app-shell-sidebar { background: var(--surface); border-color: var(--border); }
-.app-shell-header { background: color-mix(in srgb, var(--surface) 94%, transparent); border-color: var(--border); }
-.app-shell-muted { color: var(--muted-foreground); }
+/* Oversized Editorial Heading */
+.editorial-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+/* Subtle Architectural Grid Background */
+.editorial-bg-grid {
+  background-image: 
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Clean Status Indicator Dot */
+.status-beacon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+}
+
+.status-beacon::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Backward-compatible classes mapped to new editorial tokens */
+.glass-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.glass-card-hover:hover {
+  border-color: var(--border-strong);
+}
+
+.glass-navbar {
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+}
+
+.light .glass-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+.light .glass-navbar {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
 }

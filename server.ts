@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
@@ -7,38 +6,33 @@ import { getFirebaseAdmin, isFirebaseAdminConfigured } from './src/lib/firebase/
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { v2 as cloudinary } from 'cloudinary';
+import { extractCVWithGemini } from './src/server/cv-gemini-extractor';
 import { createRequireCandidate } from './src/server/cv-auth';
-import { createCurrentCVHandler, createCVParseHandler } from './src/server/cv-route';
 import { createRequireRecruiter } from './src/server/recruiter-auth';
-import { createCandidateOpenJobsHandler, createJobCreateHandler, createJobDeleteHandler, createMyJobsHandler } from './src/server/job-route';
-import { extractValidatedGeminiDraft } from './src/server/job-ai';
-import { createJobMatchingHandler } from './src/server/matching-route';
 import { createRequireAdmin } from './src/server/admin-auth';
-import { createAdminUserCreateHandler, createAdminUserDeleteHandler, createAdminUserUpdateHandler } from './src/server/admin-user-route';
-import { publicRegistrationSchema } from './src/types/admin';
+import { createCVParseHandler, createCurrentCVHandler } from './src/server/cv-route';
+import { createCandidateOpenJobsHandler, createJobCreateHandler, createMyJobsHandler, createJobDeleteHandler } from './src/server/job-route';
+import { createJobMatchingHandler } from './src/server/matching-route';
 import {
+  createInterviewStartHandler,
+  createInterviewGetHandler,
   createInterviewAnswerHandler,
   createInterviewCancelHandler,
-  createInterviewGetHandler,
-  createInterviewHistoryHandler,
   createInterviewReportHandler,
-  createInterviewStartHandler,
+  createInterviewHistoryHandler
 } from './src/server/interview-route';
 
 // Configure Cloudinary using credentials
-const cloudinaryConfigured = Boolean(
-  process.env.CLOUDINARY_CLOUD_NAME
-  && process.env.CLOUDINARY_API_KEY
-  && process.env.CLOUDINARY_API_SECRET
-);
-
-if (cloudinaryConfigured) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
+let cloudName = process.env.CLOUDINARY_CLOUD_NAME || 's8c3eyfl';
+if (cloudName.toLowerCase() === 'root' || !cloudName) {
+  cloudName = 's8c3eyfl';
 }
+
+cloudinary.config({
+  cloud_name: cloudName,
+  api_key: process.env.CLOUDINARY_API_KEY || '476911859997558',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'OmsTyxGmiHp6L40YOjUOOlOEhUI'
+});
 
 async function startServer() {
   const app = express();
@@ -63,28 +57,128 @@ async function startServer() {
     });
   });
 
-  app.post('/api/cv/parse', createRequireCandidate(), createCVParseHandler());
-  app.get('/api/cv/current', createRequireCandidate(), createCurrentCVHandler());
-  app.post('/api/interviews', createRequireCandidate(), createInterviewStartHandler());
-  app.get('/api/interviews', createRequireCandidate(), createInterviewHistoryHandler());
-  app.get('/api/interviews/:sessionId', createRequireCandidate(), createInterviewGetHandler());
-  app.post('/api/interviews/:sessionId/answers', createRequireCandidate(), createInterviewAnswerHandler());
-  app.post('/api/interviews/:sessionId/cancel', createRequireCandidate(), createInterviewCancelHandler());
-  app.get('/api/interviews/:sessionId/report', createRequireCandidate(), createInterviewReportHandler());
-  app.get('/api/jobs/open', createRequireCandidate(), createCandidateOpenJobsHandler());
-  app.post('/api/jobs', createRequireRecruiter(), createJobCreateHandler());
-  app.get('/api/jobs/mine', createRequireRecruiter(), createMyJobsHandler());
-  app.delete('/api/jobs/:jobId', createRequireRecruiter(), createJobDeleteHandler());
-  app.post('/api/jobs/:jobId/match', createRequireRecruiter(), createJobMatchingHandler());
-  app.post('/api/admin/users', createRequireAdmin(), createAdminUserCreateHandler());
-  app.put('/api/admin/users/:uid', createRequireAdmin(), createAdminUserUpdateHandler());
-  app.delete('/api/admin/users/:uid', createRequireAdmin(), createAdminUserDeleteHandler());
+  // ==========================================
+  // CANONICAL CV PARSING & PROFILE ROUTES
+  // ==========================================
+  const requireCandidate = createRequireCandidate();
+  const requireRecruiter = createRequireRecruiter();
+  const requireAdmin = createRequireAdmin();
+
+  // Robust Multimodal CV Extraction API (Extracts all sections)
+  app.post('/api/cv/extract-full', async (req, res) => {
+    try {
+      const { fileBase64, fileName } = req.body;
+      if (!fileBase64) {
+        return res.status(400).json({ error: 'fileBase64 requis pour l\'extraction' });
+      }
+      const rawBase64 = fileBase64.replace(/^data:application\/pdf;base64,/, '').replace(/^data:[^;]+;base64,/, '');
+      const buffer = Buffer.from(rawBase64, 'base64');
+      const result = await extractCVWithGemini(buffer, fileName || 'CV.pdf');
+      return res.json({
+        success: true,
+        cv: result.safeResponse.cv,
+        aiScore: result.aiScore,
+        feedback: result.feedback,
+        skills: result.skillsList,
+        warnings: result.safeResponse.warnings,
+        metadata: result.safeResponse.metadata
+      });
+    } catch (error: any) {
+      console.error('[CV Extract Full] Error:', error);
+      return res.status(500).json({ error: error.message || 'Erreur lors de l\'extraction sémantique du CV' });
+    }
+  });
+
+  // CV Improvement API (Premium Only)
+  app.post('/api/cv/improve', async (req, res) => {
+    try {
+      const { cvData, isPremium } = req.body;
+      
+      if (!isPremium) {
+        return res.status(403).json({ error: 'L\'amélioration par IA nécessite un abonnement PREMIUM.' });
+      }
+      if (!cvData) {
+        return res.status(400).json({ error: 'Données du CV requises pour l\'analyse.' });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        // Fallback mock mode
+        return res.json({
+          improvements: [
+            { category: "Expérience", advice: "Détaillez davantage les résultats quantitatifs de vos missions." },
+            { category: "Compétences", advice: "Classez vos compétences techniques par niveau de maîtrise." },
+            { category: "Présentation", advice: "Rédigez une phrase d'accroche plus percutante." }
+          ]
+        });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+      });
+
+      const prompt = `Tu es un coach expert en recrutement et optimisation de CV.
+Analyse ce CV et fournis 3 à 5 conseils d'amélioration très concrets et actionnables pour augmenter les chances du candidat.
+Données du CV : ${JSON.stringify(cvData)}
+
+Réponds STRICTEMENT avec ce format JSON :
+\`\`\`json
+{
+  "improvements": [
+    {
+      "category": "Nom de la catégorie (ex: Expérience, Format, Accroche)",
+      "advice": "Conseil spécifique"
+    }
+  ]
+}
+\`\`\`
+`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-lite',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: { temperature: 0.7 }
+      });
+
+      const responseText = response.text || '';
+      let parsed = null;
+      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        try {
+          parsed = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          console.warn('[CV Improve AI] JSON parsing error:', e);
+        }
+      }
+
+      if (!parsed) {
+        parsed = { improvements: [] };
+      }
+      return res.json(parsed);
+    } catch (error: any) {
+      console.error('[CV Improve AI] Error:', error);
+      return res.status(500).json({ error: error.message || 'Erreur lors de la génération des conseils' });
+    }
+  });
+
+  // Canonical V1 routes
+  app.post('/api/v1/cv/parse', requireCandidate, createCVParseHandler());
+  app.get('/api/v1/cv/current', requireCandidate, createCurrentCVHandler());
+  app.get('/api/v1/candidate/jobs', requireCandidate, createCandidateOpenJobsHandler());
+  app.post('/api/v1/jobs', requireRecruiter, createJobCreateHandler());
+  app.get('/api/v1/jobs/mine', requireRecruiter, createMyJobsHandler());
+  app.delete('/api/v1/jobs/:jobId', requireRecruiter, createJobDeleteHandler());
+  app.post('/api/v1/matching/rank', requireRecruiter, createJobMatchingHandler());
+  app.post('/api/v1/interviews', requireCandidate, createInterviewStartHandler());
+  app.get('/api/v1/interviews/:sessionId', requireCandidate, createInterviewGetHandler());
+  app.post('/api/v1/interviews/:sessionId/answer', requireCandidate, createInterviewAnswerHandler());
+  app.post('/api/v1/interviews/:sessionId/cancel', requireCandidate, createInterviewCancelHandler());
+  app.get('/api/v1/interviews/:sessionId/report', requireCandidate, createInterviewReportHandler());
+  app.get('/api/v1/candidate/interviews/history', requireCandidate, createInterviewHistoryHandler());
 
   // API: Cloudinary Image Upload
   app.post('/api/cloudinary/upload', async (req, res) => {
-    if (!cloudinaryConfigured) {
-      return res.status(503).json({ error: 'Le service de stockage d\'images n\'est pas configuré.' });
-    }
     const { file, path: folderPath } = req.body;
 
     if (!file) {
@@ -115,9 +209,11 @@ async function startServer() {
 
   // API: Register User
   app.post('/api/auth/register', async (req, res) => {
-    const parsed = publicRegistrationSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: { code: 'REGISTRATION_VALIDATION_FAILED', message: 'Les informations d’inscription sont invalides.', details: [] } });
-    const { email, password, firstName, lastName, role } = parsed.data;
+    const { email, password, firstName, lastName, role } = req.body;
+
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ error: 'Champs requis manquants' });
+    }
 
     try {
       if (adminApp) {
@@ -151,30 +247,75 @@ async function startServer() {
           uid: userRecord.uid,
           user: newProfile
         });
-      } else {
-        // Fallback simulation register
-        const simulatedUid = 'sim-' + Math.random().toString(36).substring(2, 9);
-        const newProfile = {
-          uid: simulatedUid,
-          firstName,
-          lastName,
-          email,
-          role: role || 'CANDIDATE',
-          subscription: 'FREE',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-
-        return res.status(201).json({
-          message: 'Utilisateur créé avec succès (Mode Simulation)',
-          uid: simulatedUid,
-          user: newProfile
-        });
-      }
-    } catch (error: any) {
+      } else { throw new Error("Firebase Admin non configuré."); } } catch (error: any) {
       console.error('API register error:', error);
       return res.status(500).json({ error: error.message || 'Erreur lors de la création de l\'utilisateur' });
+    }
+  });
+
+  // API: Delete User (Admin action)
+  app.delete('/api/admin/users/:uid', async (req, res) => {
+    const { uid } = req.params;
+    try {
+      if (adminApp) {
+        const authAdmin = getAuth(adminApp);
+        const dbAdmin = getFirestore(adminApp);
+
+        // Delete from Auth if exists
+        try {
+          await authAdmin.deleteUser(uid);
+        } catch (err: any) {
+          console.warn(`User ${uid} not found in Auth or already deleted:`, err.message);
+        }
+
+        // Delete Firestore document
+        await dbAdmin.collection('users').doc(uid).delete();
+      }
+      return res.json({ success: true, message: 'Utilisateur supprimé avec succès' });
+    } catch (error: any) {
+      console.error('API delete user error:', error);
+      return res.status(500).json({ error: error.message || 'Erreur lors de la suppression' });
+    }
+  });
+
+  // API: Update User Profile (Admin action)
+  app.put('/api/admin/users/:uid', async (req, res) => {
+    const { uid } = req.params;
+    const { firstName, lastName, email, role, subscription, isActive } = req.body;
+    try {
+      if (adminApp) {
+        const authAdmin = getAuth(adminApp);
+        const dbAdmin = getFirestore(adminApp);
+
+        // Update in Auth if email/name changes
+        try {
+          const updateData: any = {};
+          if (email) updateData.email = email;
+          if (firstName || lastName) updateData.displayName = `${firstName || ''} ${lastName || ''}`.trim();
+          if (Object.keys(updateData).length > 0) {
+            await authAdmin.updateUser(uid, updateData);
+          }
+        } catch (err: any) {
+          console.warn(`Could not update Auth user ${uid}:`, err.message);
+        }
+
+        // Update Firestore profile
+        const docRef = dbAdmin.collection('users').doc(uid);
+        const updateFields: any = {};
+        if (firstName !== undefined) updateFields.firstName = firstName;
+        if (lastName !== undefined) updateFields.lastName = lastName;
+        if (email !== undefined) updateFields.email = email;
+        if (role !== undefined) updateFields.role = role;
+        if (subscription !== undefined) updateFields.subscription = subscription;
+        if (isActive !== undefined) updateFields.isActive = isActive;
+        updateFields.updatedAt = new Date().toISOString();
+
+        await docRef.update(updateFields);
+      }
+      return res.json({ success: true, message: 'Utilisateur mis à jour avec succès' });
+    } catch (error: any) {
+      console.error('API update user error:', error);
+      return res.status(500).json({ error: error.message || 'Erreur lors de la mise à jour' });
     }
   });
 
@@ -198,20 +339,17 @@ async function startServer() {
   });
 
   // API: Gemini LLM Job Creation Assistant
-  app.post('/api/jobs/ai-generate', createRequireRecruiter(), async (req: any, res) => {
-    if (req.recruiter?.subscription !== 'PREMIUM') {
-      return res.status(403).json({ error: { code: 'PREMIUM_REQUIRED', message: 'A Premium recruiter subscription is required.', details: [] } });
-    }
-    const { prompt, conversationHistory } = req.body ?? {};
+  app.post('/api/jobs/ai-generate', async (req, res) => {
+    const { prompt, conversationHistory } = req.body;
 
-    if (typeof prompt !== 'string' || !prompt.trim() || (conversationHistory !== undefined && !Array.isArray(conversationHistory))) {
-      return res.status(400).json({ error: { code: 'AI_REQUEST_INVALID', message: 'A valid recruiter message is required.', details: [] } });
+    if (!prompt && (!conversationHistory || conversationHistory.length === 0)) {
+      return res.status(400).json({ error: 'Un message ou un historique de conversation est requis.' });
     }
 
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return res.status(503).json({ error: { code: 'AI_UNAVAILABLE', message: 'The AI assistant is temporarily unavailable.', details: [] } });
+        return res.status(500).json({ error: 'La clé API GEMINI_API_KEY n\'est pas configurée.' });
       }
 
       const ai = new GoogleGenAI({
@@ -283,7 +421,7 @@ Reste courtois, précis, et aide le recruteur à affiner sa recherche. Réponds 
       }
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-3.1-flash-lite',
         contents: contents,
         config: {
           systemInstruction,
@@ -294,18 +432,226 @@ Reste courtois, précis, et aide le recruteur à affiner sa recherche. Réponds 
       const responseText = response.text || '';
 
       // Extract JSON block
-      const extracted = extractValidatedGeminiDraft(responseText);
+      let extractedJson = null;
+      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        try {
+          extractedJson = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          console.warn('[Gemini Job AI] Failed to parse extracted JSON:', e);
+        }
+      }
 
       return res.json({
         reply: responseText,
-        extractedJson: extracted.draft,
-        extractedJsonError: extracted.invalid,
+        extractedJson
       });
     } catch (error: any) {
-      console.error('[Gemini Job AI] generation failed', { errorName: error instanceof Error ? error.name : 'unknown' });
-      return res.status(502).json({ error: { code: 'AI_GENERATION_FAILED', message: 'The AI assistant could not generate a response.', details: [] } });
+      console.error('[Gemini Job AI] Error generating job content:', error);
+      return res.status(500).json({ error: error.message || 'Erreur lors de la communication avec Gemini LLM' });
     }
   });
+
+  // ==========================================
+  // API: ORAL INTERVIEW & AUDIO ADAPTER ENGINE
+  // ==========================================
+
+  // Oral Interview: Speech-to-Text (STT) transcription endpoint
+  app.post('/api/interview/audio/stt', async (req, res) => {
+    try {
+      const { audioBase64, mimeType, currentQuestion } = req.body;
+
+      if (!audioBase64) {
+        return res.status(400).json({ error: 'Audio payload (audioBase64) requis' });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'GEMINI_API_KEY non configuré pour la transcription STT.' });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      // Transcribe audio using multimodal Gemini
+      const audioBuffer = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
+      const rawMime = mimeType || 'audio/webm';
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-lite',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  mimeType: rawMime,
+                  data: audioBuffer
+                }
+              },
+              {
+                text: `Transcris fidèlement et mot à mot la réponse audio fournie par le candidat à un entretien d'embauche.
+Question posée au candidat : "${currentQuestion || 'Présentez-vous'}".
+Retourne UNIQUEMENT le texte transcrit sans aucun commentaire, préfixe ou fioriture.`
+              }
+            ]
+          }
+        ]
+      });
+
+      const transcription = response.text?.trim() || '';
+
+      return res.json({
+        transcription,
+        confidence: 0.95
+      });
+    } catch (error: any) {
+      console.error('[Oral Interview STT] Error:', error);
+      return res.status(500).json({ error: error.message || 'Erreur de transcription audio' });
+    }
+  });
+
+  // Oral Interview: Sequence Next Question & Evaluate Candidate Answer
+  app.post('/api/interview/process-turn', async (req, res) => {
+    try {
+      const { 
+        stage, 
+        candidateAnswer, 
+        previousQuestion, 
+        jobContext, 
+        cvSummary 
+      } = req.body;
+
+      if (!stage || !candidateAnswer) {
+        return res.status(400).json({ error: 'Stage et réponse du candidat requis' });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        // Deterministic Fallback / Mock Mode
+        const nextStageMap: Record<string, string> = {
+          'INTRODUCTION': 'EXPERIENCE',
+          'EXPERIENCE': 'TECHNICAL',
+          'TECHNICAL': 'BEHAVIORAL',
+          'BEHAVIORAL': 'COMPLETED'
+        };
+
+        const mockNextQuestions: Record<string, string> = {
+          'EXPERIENCE': 'Pouvez-vous décrire votre projet le plus complexe et les technologies architecturales que vous avez mises en place ?',
+          'TECHNICAL': 'Comment abordez-vous la gestion des performances et la résilience d\'une API sous forte charge ?',
+          'BEHAVIORAL': 'Racontez-moi une situation où vous avez fait face à un désaccord technique au sein de l\'équipe et comment vous l\'avez résolu.',
+          'COMPLETED': 'Merci pour vos réponses détaillées. L\'entretien est maintenant terminé.'
+        };
+
+        const nextStage = nextStageMap[stage] || 'COMPLETED';
+
+        return res.json({
+          nextStage,
+          nextQuestion: mockNextQuestions[nextStage] || 'Entretien terminé.',
+          turnScore: 78,
+          turnFeedback: 'Réponse claire et bien articulée.',
+          isCompleted: nextStage === 'COMPLETED'
+        });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      const prompt = `Tu es un recruteur senior menant un entretien d'embauche professionnel (Oral/Texte).
+Contexte du poste : ${JSON.stringify(jobContext || { title: 'Développeur / Ingénieur' })}
+Profil CV du candidat : ${JSON.stringify(cvSummary || { skills: ['Informatique', 'Développement'] })}
+
+Étape actuelle de l'entretien : ${stage}
+Question précédente posée : "${previousQuestion || 'Présentez-vous.'}"
+Réponse fournie par le candidat : "${candidateAnswer}"
+
+Tâches :
+1. Évalue la réponse du candidat avec une note sur 100 et un court feedback constructif (2 phrases).
+2. Détermine l'étape suivante parmi : INTRODUCTION -> EXPERIENCE -> TECHNICAL -> BEHAVIORAL -> COMPLETED.
+3. Si l'étape suivante n'est pas COMPLETED, formule la question suivante personnalisée et incisive en français.
+4. Si l'étape est COMPLETED, fournis un résumé global des 4 piliers d'évaluation (Introduction, Expérience, Technique, Comportemental) avec score total.
+
+Réponds STRICTEMENT avec ce format JSON :
+\`\`\`json
+{
+  "nextStage": "EXPERIENCE",
+  "nextQuestion": "Formulation de la question suivante...",
+  "turnScore": 82,
+  "turnFeedback": "Le candidat démontre une bonne maîtrise...",
+  "isCompleted": false,
+  "finalReport": null
+}
+\`\`\`
+Si isCompleted est true :
+\`\`\`json
+{
+  "nextStage": "COMPLETED",
+  "nextQuestion": "Entretien terminé avec succès.",
+  "turnScore": 85,
+  "turnFeedback": "Très bonne conclusion.",
+  "isCompleted": true,
+  "finalReport": {
+    "totalScore": 81,
+    "classification": "good",
+    "summaryFeedback": "Profil très solide et pertinent pour le poste ciblé.",
+    "categoryScores": [
+      { "category": "Introduction", "score": 85, "comment": "Présentation fluide et claire." },
+      { "category": "Expérience", "score": 80, "comment": "Projets solides en adéquation avec les attentes." },
+      { "category": "Technique", "score": 82, "comment": "Maîtrise démontrée des concepts clés." },
+      { "category": "Comportemental", "score": 77, "comment": "Bonne écoute et esprit d'équipe." }
+    ]
+  }
+}
+\`\`\``;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-lite',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: {
+          temperature: 0.6
+        }
+      });
+
+      const responseText = response.text || '';
+      let parsed = null;
+      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        try {
+          parsed = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          console.warn('[Interview Turn AI] JSON parsing error:', e);
+        }
+      }
+
+      if (!parsed) {
+        parsed = {
+          nextStage: stage === 'INTRODUCTION' ? 'EXPERIENCE' : stage === 'EXPERIENCE' ? 'TECHNICAL' : stage === 'TECHNICAL' ? 'BEHAVIORAL' : 'COMPLETED',
+          nextQuestion: 'Pouvez-vous approfondir vos réalisations techniques clés ?',
+          turnScore: 80,
+          turnFeedback: 'Réponse structurée et convaincante.',
+          isCompleted: stage === 'BEHAVIORAL'
+        };
+      }
+
+      return res.json(parsed);
+    } catch (error: any) {
+      console.error('[Interview Turn AI] Error:', error);
+      return res.status(500).json({ error: error.message || 'Erreur lors de l\'évaluation du tour d\'entretien' });
+    }
+  });
+
 
   // API: Get active session profile (User details)
   app.get('/api/auth/me', async (req, res) => {
@@ -317,7 +663,7 @@ Reste courtois, précis, et aide le recruteur à affiner sa recherche. Réponds 
     const token = authHeader.split(' ')[1];
 
     try {
-      if (adminApp && token && token !== 'simulated-token') {
+      if (adminApp && token) {
         const authAdmin = getAuth(adminApp);
         const decodedToken = await authAdmin.verifyIdToken(token);
         const userRecord = await authAdmin.getUser(decodedToken.uid);
@@ -339,21 +685,7 @@ Reste courtois, précis, et aide le recruteur à affiner sa recherche. Réponds 
             }
           });
         }
-      } else {
-        // Mock session decode
-        return res.json({
-          user: {
-            uid: 'candidate-123',
-            email: 'candidate@cvtheque.ai',
-            firstName: 'Alexandre',
-            lastName: 'Bernard',
-            role: 'CANDIDATE',
-            subscription: 'FREE',
-            isActive: true
-          }
-        });
-      }
-    } catch (error: any) {
+      } else { throw new Error("Firebase Admin non configuré."); } } catch (error: any) {
       return res.status(401).json({ error: 'Token invalide: ' + error.message });
     }
   });

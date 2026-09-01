@@ -1,66 +1,254 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Loader2, User } from 'lucide-react';
-import { toast } from 'sonner';
-import { buildSelfProfileUpdate, getAuthErrorMessage } from '../../lib/auth/ux';
-import { dbEngine } from '../../lib/firebase/db';
-import { storageService } from '../../lib/storage-service';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../providers/auth-provider';
-import { Badge, StatusBadge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader } from '../ui/card';
-import { FormField, Input } from '../ui/form-controls';
-import { PageHeader } from '../ui/page-header';
+import { dbEngine } from '../../lib/firebase/db';
 import { RoleBadge } from '../ui/role-badge';
+import { User, Mail, CreditCard, Sparkles, Shield, Camera, Loader2, Check, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
+import { storageService } from '../../lib/storage-service';
 
 export const ProfileView: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [photoURL, setPhotoURL] = useState('');
+  const [firstName, setFirstName] = useState(profile?.firstName || '');
+  const [lastName, setLastName] = useState(profile?.lastName || '');
+  const [photoURL, setPhotoURL] = useState(profile?.photoURL || '');
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string>();
-  const avatarRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (profile) { setFirstName(profile.firstName); setLastName(profile.lastName); setPhotoURL(profile.photoURL ?? ''); } }, [profile]);
-  if (!profile) return <div role="alert" className="text-sm text-[var(--danger)]">Votre profil est indisponible.</div>;
-  const initials = `${profile.firstName.at(0) ?? ''}${profile.lastName.at(0) ?? ''}`.toUpperCase();
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const avatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]; if (!file) return;
-    if (!file.type.startsWith('image/')) { setError('Sélectionnez un fichier image valide.'); return; }
-    setUploading(true); setError(undefined);
-    try { setPhotoURL(await storageService.uploadFile(file, `users/${profile.uid}/avatars/${Date.now()}_${file.name}`)); toast.success('Photo chargée. Enregistrez pour confirmer.'); }
-    catch (cause) { setError(getAuthErrorMessage(cause, 'profile')); }
-    finally { setUploading(false); event.target.value = ''; }
+  if (!profile) return null;
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setUploadingAvatar(true);
+      try {
+        const path = `users/${profile.uid}/avatars/${Date.now()}_${file.name}`;
+        const uploadedUrl = await storageService.uploadFile(file, path);
+        setPhotoURL(uploadedUrl);
+        toast.success('New image loaded. Click Save Changes to confirm.');
+      } catch (err: any) {
+        toast.error(err.message || 'Error uploading profile image.');
+      } finally {
+        setUploadingAvatar(false);
+      }
+    }
   };
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault(); setError(undefined);
-    const payload = buildSelfProfileUpdate({ firstName, lastName, photoURL });
-    if (!payload.firstName || !payload.lastName) { setError('Le prénom et le nom sont requis.'); return; }
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstName || !lastName) {
+      toast.error('First name and last name are required.');
+      return;
+    }
+
     setSaving(true);
-    try { await dbEngine.updateUserProfile(profile.uid, payload); await refreshProfile(); toast.success('Profil mis à jour.'); }
-    catch (cause) { setError(getAuthErrorMessage(cause, 'profile')); }
-    finally { setSaving(false); }
+    try {
+      await dbEngine.updateUserProfile(profile.uid, {
+        firstName,
+        lastName,
+        photoURL: photoURL.trim() || undefined
+      });
+      await refreshProfile();
+      toast.success('Your profile has been successfully updated.');
+    } catch (err) {
+      toast.error('Error during update.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return <div className="mx-auto max-w-5xl space-y-6">
-    <PageHeader title="Mon profil" description="Gérez vos informations personnelles et consultez les paramètres de votre compte." />
-    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <Card><CardContent className="text-center">
-        <div className="relative mx-auto mb-4 h-24 w-24 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)]">{photoURL ? <img src={photoURL} alt="Photo de profil" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <span className="flex h-full items-center justify-center text-xl font-semibold text-[var(--primary)]">{initials || <User className="h-6 w-6" />}</span>}<button type="button" onClick={() => avatarRef.current?.click()} disabled={uploading} className="absolute inset-x-0 bottom-0 flex min-h-9 items-center justify-center bg-black/65 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]" aria-label="Changer la photo de profil">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}</button></div>
-        <input ref={avatarRef} type="file" accept="image/*" className="sr-only" onChange={avatar} />
-        <p className="font-semibold text-[var(--foreground)]">{profile.firstName} {profile.lastName}</p><p className="mt-1 break-all text-sm text-[var(--muted-foreground)]">{profile.email}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><RoleBadge role={profile.role} /><Badge>{profile.subscription === 'PREMIUM' ? 'Premium' : 'Gratuit'}</Badge><StatusBadge status={profile.isActive ? 'Actif' : 'Inactif'} /></div>
-      </CardContent></Card>
-      <div className="space-y-6">
-        <Card><CardHeader><h2 className="text-base font-semibold text-[var(--foreground)]">Informations personnelles</h2><p className="mt-1 text-sm text-[var(--muted-foreground)]">Ces informations peuvent être modifiées.</p></CardHeader><CardContent><form onSubmit={save} className="space-y-5" aria-busy={saving || uploading}>
-          {error && <div role="alert" className="rounded-[10px] border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--danger)]">{error}</div>}
-          <div className="grid gap-4 sm:grid-cols-2"><FormField label="Prénom" htmlFor="profile-first-name" required><Input id="profile-first-name" autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} /></FormField><FormField label="Nom" htmlFor="profile-last-name" required><Input id="profile-last-name" autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} /></FormField></div>
-          <Button type="submit" disabled={saving || uploading}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Enregistrer les modifications</Button>
-        </form></CardContent></Card>
-        <Card><CardHeader><h2 className="text-base font-semibold text-[var(--foreground)]">Informations du compte</h2><p className="mt-1 text-sm text-[var(--muted-foreground)]">Ces données sont gérées par la plateforme et ne sont pas modifiables ici.</p></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><ReadOnly label="Adresse e-mail" value={profile.email} /><ReadOnly label="Rôle" value={profile.role === 'CANDIDATE' ? 'Candidat' : profile.role === 'RECRUITER' ? 'Recruteur' : 'Administrateur'} /><ReadOnly label="Abonnement" value={profile.subscription === 'PREMIUM' ? 'Premium' : 'Gratuit'} /><ReadOnly label="Statut" value={profile.isActive ? 'Actif' : 'Inactif'} /></CardContent></Card>
+  const handleToggleSubscription = async () => {
+    const nextTier = profile.subscription === 'FREE' ? 'PREMIUM' : 'FREE';
+    try {
+      await dbEngine.updateUserProfile(profile.uid, { subscription: nextTier });
+      await refreshProfile();
+      toast.success(`Subscription updated: ${nextTier === 'PREMIUM' ? 'Premium Activated!' : 'Free Plan Active'}`);
+    } catch (e) {
+      toast.error('Subscription error.');
+    }
+  };
+
+  const initials = `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase();
+
+  return (
+    <div className="space-y-12 pb-24 text-left select-none max-w-6xl mx-auto font-sans">
+      {/* ================= PROFILE HERO ================= */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--border)] pb-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-mono font-bold tracking-widest uppercase text-[#0047FF]">
+              // PROFESSIONAL IDENTITY
+            </span>
+            <span className="h-px w-12 bg-white/10" />
+            <span className="text-[10px] font-mono text-[var(--muted-foreground)] uppercase">
+              ACCOUNT DOSSIER
+            </span>
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl font-extrabold font-display text-[var(--foreground)] tracking-tight uppercase leading-[1.05]">
+            YOUR PROFILE.<br />
+            <span className="text-[var(--muted-foreground)]">YOUR SIGNAL.</span>
+          </h1>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-[var(--surface-secondary)] border border-[var(--border)] flex items-center gap-3 shrink-0">
+          <RoleBadge role={profile.role} />
+          <RoleBadge subscription={profile.subscription} />
+        </div>
+      </div>
+
+      {/* ================= ASYMMETRIC COMPOSITION ================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: Identity & Status (4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="p-8 rounded-3xl bg-[var(--surface-secondary)] border border-[var(--border)] flex flex-col items-center text-center space-y-6">
+            <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()} title="Change Avatar">
+              <input
+                type="file"
+                ref={avatarInputRef}
+                onChange={handleAvatarChange}
+                accept="image/*"
+                className="hidden"
+              />
+              {photoURL || profile.photoURL ? (
+                <img
+                  src={photoURL || profile.photoURL}
+                  alt=""
+                  className="w-28 h-28 rounded-2xl object-cover border-2 border-[var(--border-strong)] bg-[var(--surface-secondary)] shadow-xl transition-transform group-hover:scale-105 group-hover:border-[#0047FF]"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-28 h-28 rounded-2xl bg-[#0047FF]/10 border-2 border-[#0047FF]/30 flex items-center justify-center text-3xl font-mono font-bold text-[var(--foreground)] shadow-xl transition-transform group-hover:scale-105">
+                  {initials || 'USER'}
+                </div>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
+                {uploadingAvatar ? (
+                  <Loader2 className="w-6 h-6 text-[#0047FF] animate-spin" />
+                ) : (
+                  <Camera className="w-6 h-6 text-[var(--foreground)]" />
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-xl font-bold font-display text-[var(--foreground)] uppercase tracking-tight">
+                {profile.firstName} {profile.lastName}
+              </h3>
+              <p className="text-xs font-mono text-[var(--muted-foreground)]">{profile.email}</p>
+            </div>
+
+            <div className="w-full pt-4 border-t border-[var(--border)] space-y-3 text-xs font-mono">
+              <div className="flex justify-between items-center px-4 py-3 bg-[var(--surface-secondary)] rounded-2xl border border-[var(--border)]">
+                <span className="text-[var(--muted-foreground)] uppercase text-[10px]">ACCOUNT STATUS</span>
+                <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  ACTIVE
+                </span>
+              </div>
+              <div className="flex justify-between items-center px-4 py-3 bg-[var(--surface-secondary)] rounded-2xl border border-[var(--border)]">
+                <span className="text-[var(--muted-foreground)] uppercase text-[10px]">USER ID</span>
+                <span className="text-[var(--foreground)] font-bold">{profile.uid.slice(0, 8)}...</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Subscription Panel */}
+          <div className="p-6 rounded-3xl bg-[var(--surface-secondary)] border border-[var(--border)] space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <span className="text-[10px] font-mono font-bold text-[var(--muted-foreground)] uppercase tracking-widest">// PLAN SIGNATURE</span>
+              <RoleBadge subscription={profile.subscription} />
+            </div>
+
+            <p className="text-xs text-[var(--foreground-secondary)] font-sans leading-relaxed">
+              {profile.subscription === 'PREMIUM'
+                ? 'You currently hold unlimited access to advanced semantic ranking and AI interview studio suites.'
+                : 'You are operating on the standard candidate and recruiter tier with standard quotas.'}
+            </p>
+
+            <button
+              onClick={handleToggleSubscription}
+              className="w-full py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-[var(--foreground)] font-mono text-xs font-bold border border-[var(--border)] transition-colors cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#0047FF]" />
+              <span>{profile.subscription === 'PREMIUM' ? 'SWITCH TO FREE PLAN' : 'ACTIVATE PREMIUM'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Right Column: Personal Information Form (8 cols) */}
+        <div className="lg:col-span-8">
+          <form onSubmit={handleSaveProfile} className="p-8 sm:p-10 rounded-3xl bg-[var(--surface-secondary)] border border-[var(--border)] space-y-8">
+            <div className="space-y-2 border-b border-[var(--border)] pb-4">
+              <span className="text-[10px] font-mono font-bold text-[#0047FF] uppercase tracking-widest">// 01 / IDENTITY METRICS</span>
+              <h3 className="text-2xl font-bold font-display text-[var(--foreground)] uppercase">PERSONAL INFORMATION</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-mono text-xs">
+              <div className="space-y-2">
+                <label className="text-[var(--muted-foreground)] uppercase text-[10px] font-bold">FIRST NAME</label>
+                <input
+                  type="text"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground)] focus:outline-none focus:border-[#0047FF] transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[var(--muted-foreground)] uppercase text-[10px] font-bold">LAST NAME</label>
+                <input
+                  type="text"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground)] focus:outline-none focus:border-[#0047FF] transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 font-mono text-xs">
+              <label className="text-[var(--muted-foreground)] uppercase text-[10px] font-bold">EMAIL ADDRESS (IMMUTABLE)</label>
+              <input
+                type="email"
+                disabled
+                value={profile.email}
+                className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--muted-foreground)] cursor-not-allowed"
+              />
+            </div>
+
+            <div className="space-y-2 border-b border-[var(--border)] pb-4 pt-4">
+              <span className="text-[10px] font-mono font-bold text-[#0047FF] uppercase tracking-widest">// 02 / SYSTEM ACCESS</span>
+              <h3 className="text-2xl font-bold font-display text-[var(--foreground)] uppercase">ACCESS PRIVILEGES</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-mono text-xs">
+              <div className="p-4 rounded-2xl bg-[var(--surface-secondary)] border border-[var(--border)] space-y-1">
+                <span className="text-[var(--muted-foreground)] text-[10px]">ASSIGNED ROLE</span>
+                <p className="text-[var(--foreground)] font-bold text-sm uppercase">{profile.role}</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[var(--surface-secondary)] border border-[var(--border)] space-y-1">
+                <span className="text-[var(--muted-foreground)] text-[10px]">SUBSCRIPTION TIER</span>
+                <p className="text-[var(--foreground)] font-bold text-sm uppercase">{profile.subscription}</p>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-[var(--border)] flex items-center justify-end">
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-8 py-3.5 rounded-2xl bg-[#0047FF] hover:bg-[#0038CC] text-[var(--foreground)] font-mono text-xs font-bold transition-all shadow-lg shadow-[#0047FF]/20 flex items-center gap-2 cursor-pointer"
+              >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>SAVE CHANGES →</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>;
+  );
 };
 
-const ReadOnly: React.FC<{ label: string; value: string }> = ({ label, value }) => <div><dt className="text-xs font-medium text-[var(--muted-foreground)]">{label}</dt><dd className="mt-1 text-sm font-medium text-[var(--foreground)]">{value}</dd></div>;

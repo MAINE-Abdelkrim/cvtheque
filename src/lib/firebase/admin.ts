@@ -35,8 +35,11 @@ export function selectFirebaseAdminCredential(
 
   // An explicitly configured file is authoritative. If it is unavailable, do
   // not silently initialize against a legacy project.
+  const pathModule = cwd.includes('\\') || explicitFile?.includes('\\') ? path.win32 : path;
   if (explicitFile) {
-    const filePath = path.resolve(cwd, explicitFile);
+    const filePath = pathModule.isAbsolute(explicitFile)
+      ? explicitFile
+      : pathModule.resolve(cwd, explicitFile);
     return fileExists(filePath)
       ? { kind: 'file', source: 'explicit_file', filePath }
       : null;
